@@ -8,6 +8,7 @@ import routes from "./routes";
 import { requestLogger } from "./middlewares/requestLogger.middleware";
 import { requestIdMiddleware } from "./middlewares/requestId.middleware";
 import { rateLimiter } from "./middlewares/rateLimiter.middleware";
+import { errorHandler } from "./errors/errorHandler";
 
 const app = express();
 
@@ -34,5 +35,7 @@ app.use(
 );
 
 app.use("/", routes);
+
+app.use(errorHandler);
 
 export default app;
