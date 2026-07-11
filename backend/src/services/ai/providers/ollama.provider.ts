@@ -18,7 +18,7 @@ export class OllamaProvider implements IAIProvider {
     }
 
     async generate<T = unknown>(request: AIRequest): Promise<AIResponse<T>> {
-        const modelName = request.model || "llama3";
+        const modelName = process.env.OLLAMA_MODEL || request.model || "llama3";
         const start = Date.now();
 
         try {
@@ -79,7 +79,7 @@ export class OllamaProvider implements IAIProvider {
     }
 
     async *stream(request: AIRequest): AsyncIterable<AIStreamChunk> {
-        const modelName = request.model || "llama3";
+        const modelName = process.env.OLLAMA_MODEL || request.model || "llama3";
 
         try {
             const res = await fetch(`${this.url}/api/chat`, {
@@ -185,7 +185,7 @@ export class OllamaProvider implements IAIProvider {
                 available: true,
                 latencyMs: latency,
                 version: "v1",
-                model: "llama3",
+                model: process.env.OLLAMA_MODEL || "llama3",
                 configured: true,
                 authenticated: true
             };

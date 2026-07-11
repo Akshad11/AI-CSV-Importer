@@ -32,32 +32,7 @@ export const useResultsStore = create<ResultsState>((set) => ({
   crmRecords: [],
   skippedRecords: [],
   stats: null,
-  history: [
-    {
-      id: 'hist-1',
-      fileName: 'leads_q3.csv',
-      date: new Date(Date.now() - 2 * 3600000).toISOString(),
-      status: 'Success',
-      importedRows: 1250,
-      totalRows: 1279,
-    },
-    {
-      id: 'hist-2',
-      fileName: 'events_attendees.csv',
-      date: new Date(Date.now() - 24 * 3600000).toISOString(),
-      status: 'Partial',
-      importedRows: 450,
-      totalRows: 500,
-    },
-    {
-      id: 'hist-3',
-      fileName: 'old_contacts.csv',
-      date: new Date(Date.now() - 5 * 86400000).toISOString(),
-      status: 'Failed',
-      importedRows: 0,
-      totalRows: 1000,
-    },
-  ],
+  history: [],
 
   setResults: (crmRecords, skippedRecords, stats) =>
     set({

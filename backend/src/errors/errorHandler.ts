@@ -12,6 +12,10 @@ export const errorHandler = (
 ) => {
     logger.error({
         requestId: req.requestId,
+        module: "Express",
+        action: "Request Error",
+        status: "FAILED",
+        message: err instanceof Error ? err.message : String(err),
         error: err,
     });
 

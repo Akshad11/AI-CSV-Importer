@@ -72,7 +72,7 @@ export function parseCsvFile(file: File, opts: ParseCsvOptions): void {
     complete: (results) => {
       opts.onProgress?.(100);
       const headers = results.meta.fields || [];
-      const rawRows = results.data as any[];
+      const rawRows = results.data as Record<string, string>[];
       const totalRows = rawRows.length;
 
       if (totalRows === 0) {
@@ -137,8 +137,9 @@ export function parseCsvText(text: string, opts: ParseCsvOptions): void {
       delimiter: results.meta.delimiter || ',',
       mapping: buildColumnMappings(headers),
     });
-  } catch (err: any) {
-    opts.onError(`Failed parsing CSV text: ${err?.message ?? 'Unknown error'}`);
+  } catch (err: unknown) {
+    const errMsg = err instanceof Error ? err.message : String(err);
+    opts.onError(`Failed parsing CSV text: ${errMsg}`);
   }
 }
 

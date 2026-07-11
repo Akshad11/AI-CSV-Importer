@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { useImportStore, useUploadStore } from '../../store';
+import { useImportStore, useUploadStore, usePreviewStore, useSettingsStore, useResultsStore } from '../../store';
 import { PageContainer } from '../../components/common/PageContainer';
 import { LogTable } from '../../components/processing/LogTable';
 import { ProgressRing } from '../../components/common/ProgressRing';
@@ -10,12 +10,14 @@ import { ProgressBar } from '../../components/common/ProgressBar';
 import { Button } from '../../components/ui/button';
 import { Dialog } from '../../components/ui/dialog';
 import { formatDuration } from '../../utils';
-import { extractionSimulator } from '../../services/simulator/extractionSim';
+import { ImportService } from '../../services/api/importService';
 import { AlertCircle, Play, Ban, ArrowRight, ShieldCheck, RefreshCw } from 'lucide-react';
 
 export default function ProcessingPage() {
   const router = useRouter();
-  const { fileMeta } = useUploadStore();
+  const { fileMeta, file } = useUploadStore();
+  const { columnMappings } = usePreviewStore();
+  const { settings } = useSettingsStore();
   const {
     status,
     processedRows,
@@ -27,9 +29,15 @@ export default function ProcessingPage() {
     warningCount,
     failureCount,
     resetProcessing,
+    updateProgress,
+    addLog,
+    completeProcessing,
+    failProcessing,
+    cancelProcessing,
   } = useImportStore();
 
   const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   // Trigger extraction pipeline on mount
   useEffect(() => {
@@ -39,29 +47,201 @@ export default function ProcessingPage() {
       return;
     }
 
-    // Start simulator if we are running
+    let isAborted = false;
+
+    // Start API call if we are running
     if (status === 'running') {
-      extractionSimulator.start(() => {
-        // Auto navigate to results on successful simulation completion
-        setTimeout(() => {
-          router.push('/results');
-        }, 2000);
-      });
+      const controller = new AbortController();
+      abortControllerRef.current = controller;
+
+      const runProcess = async () => {
+        try {
+          addLog({
+            message: `[UPLOAD] Initializing server connection. Uploading CSV file (size: ${fileMeta.size} bytes)...`,
+            type: 'info'
+          });
+
+          let uploadFinished = false;
+
+          const uploadTimer = setTimeout(() => {
+            if (!uploadFinished && !isAborted) {
+              addLog({
+                message: `[UPLOAD] Upload still in progress. Please wait...`,
+                type: 'info'
+              });
+            }
+          }, 3000);
+
+          let model = 'mock-model';
+          if (settings.aiProvider === 'openai') model = 'gpt-4o-mini';
+          else if (settings.aiProvider === 'gemini') model = 'gemini-1.5-flash';
+          else if (settings.aiProvider === 'ollama') model = 'llama3';
+
+          const responsePromise = ImportService.processCsv({
+            file: file!,
+            provider: settings.aiProvider,
+            model,
+            batchSize: 25,
+            columnMappings,
+            confidenceThreshold: settings.confidenceThreshold,
+            defaultLeadSource: settings.defaultLeadSource,
+            signal: controller.signal,
+            onProgress: (pct) => {
+              if (!isAborted) {
+                // upload is first 15% of progress
+                const val = Math.round((pct / 100) * fileMeta.rows * 0.15);
+                updateProgress(
+                  val,
+                  0,
+                  0,
+                  { success: 0, warning: 0, failure: 0, speed: 0, cost: 0 }
+                );
+              }
+            }
+          });
+
+          const logsTimer1 = setTimeout(() => {
+            if (!isAborted) {
+              addLog({
+                message: `[PARSE] Upload complete. Server is parsing CSV rows and validating headers...`,
+                type: 'info'
+              });
+              updateProgress(
+                Math.round(fileMeta.rows * 0.35),
+                1,
+                0,
+                { success: 0, warning: 0, failure: 0, speed: 0, cost: 0 }
+              );
+            }
+          }, 1500);
+
+          const logsTimer2 = setTimeout(() => {
+            if (!isAborted) {
+              addLog({
+                message: `[AI] AI Ingestion Pipeline active. Extracting CRM fields using provider [${settings.aiProvider}] with model [${model}]...`,
+                type: 'info'
+              });
+              addLog({
+                message: `[AI] Running fuzzy mapping and formatting rules for cell values...`,
+                type: 'info'
+              });
+              updateProgress(
+                Math.round(fileMeta.rows * 0.70),
+                2,
+                0,
+                { success: 0, warning: 0, failure: 0, speed: 0, cost: 0 }
+              );
+            }
+          }, 4000);
+
+          const logsTimer3 = setTimeout(() => {
+            if (!isAborted) {
+              addLog({
+                message: `[VALIDATION] Running lead schema validations (Zod constraints checking)...`,
+                type: 'info'
+              });
+              updateProgress(
+                Math.round(fileMeta.rows * 0.90),
+                3,
+                0,
+                { success: 0, warning: 0, failure: 0, speed: 0, cost: 0 }
+              );
+            }
+          }, 7500);
+
+          const res = await responsePromise;
+          uploadFinished = true;
+          clearTimeout(uploadTimer);
+          clearTimeout(logsTimer1);
+          clearTimeout(logsTimer2);
+          clearTimeout(logsTimer3);
+
+          if (isAborted) return;
+
+          if (res.success && res.data) {
+            const { records, skipped, statistics } = res.data;
+
+            addLog({
+              message: `[FINISH] Ingestion complete: successfully parsed and imported ${records.length} records. ${skipped.length} records skipped.`,
+              type: 'success'
+            });
+
+            // Set final completed progress metrics
+            updateProgress(
+              fileMeta.rows,
+              Math.ceil(fileMeta.rows / 25),
+              0,
+              {
+                success: statistics.imported,
+                warning: statistics.warnings,
+                failure: statistics.skipped,
+                speed: statistics.recordsPerSecond,
+                cost: statistics.totalCost
+              }
+            );
+
+            // Save results to store
+            useResultsStore.getState().setResults(
+              records,
+              skipped,
+              statistics
+            );
+
+            // Add history item
+            useResultsStore.getState().addHistoryItem({
+              fileName: fileMeta.name,
+              status: skipped.length === 0 ? 'Success' : records.length > 0 ? 'Partial' : 'Failed',
+              importedRows: records.length,
+              totalRows: fileMeta.rows
+            });
+
+            completeProcessing();
+
+            // Auto-navigate to results page
+            setTimeout(() => {
+              router.push('/results');
+            }, 1500);
+
+          } else {
+            throw new Error(res.message || "Failed processing CSV");
+          }
+        } catch (err: any) {
+          if (err.name === 'AbortError' || isAborted) {
+            addLog({
+              message: `[CANCEL] Process aborted by user. Ingestion pipeline terminated.`,
+              type: 'warning'
+            });
+            return;
+          }
+
+          const errorMsg = err.message || (err.error && err.error.message) || String(err);
+          addLog({
+            message: `[ERROR] Extraction failed: ${errorMsg}`,
+            type: 'error'
+          });
+          failProcessing(errorMsg);
+        }
+      };
+
+      runProcess();
     }
 
-    // Cleanup simulator on unmount (cancel active timers)
+    // Cleanup on unmount
     return () => {
-      // We don't cancel if already completed, only if unmounted mid-run
-      if (useImportStore.getState().status === 'running') {
-        extractionSimulator.cancel();
+      isAborted = true;
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
       }
     };
-  }, [fileMeta, router, status]);
+  }, [fileMeta, file, columnMappings, settings, status, router, updateProgress, addLog, completeProcessing, failProcessing]);
 
   const percentage = totalRows > 0 ? (processedRows / totalRows) * 100 : 0;
 
   const handleCancelConfirm = () => {
-    extractionSimulator.cancel();
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    cancelProcessing("Cancelled by user");
     setIsCancelDialogOpen(false);
   };
 
@@ -152,15 +332,18 @@ export default function ProcessingPage() {
       <div className="flex flex-col gap-3">
         <LogTable />
 
-        {/* Progress bar below logs */}
-        <div className="p-4 bg-card rounded-2xl border border-border shadow-sm flex flex-col gap-3 select-none">
-          <div className="flex justify-between items-center text-xs font-semibold">
-            <span className="text-muted-foreground">Pipeline Ingestion Progress</span>
-            <span className="text-foreground font-mono font-bold">
-              {processedRows} / {totalRows} Rows
-            </span>
+        {/* Progress row containing ring and progress bar */}
+        <div className="p-4 bg-card rounded-2xl border border-border shadow-sm flex flex-col md:flex-row items-center gap-4 select-none">
+          <ProgressRing progress={percentage} size={70} strokeWidth={6} className="shrink-0" />
+          <div className="flex-1 flex flex-col gap-2.5 w-full">
+            <div className="flex justify-between items-center text-xs font-semibold">
+              <span className="text-muted-foreground">Pipeline Ingestion Progress</span>
+              <span className="text-foreground font-mono font-bold">
+                {processedRows} / {totalRows} Rows
+              </span>
+            </div>
+            <ProgressBar progress={percentage} />
           </div>
-          <ProgressBar progress={percentage} />
         </div>
       </div>
 
@@ -184,7 +367,7 @@ export default function ProcessingPage() {
         </div>
         <div className="text-center p-3.5 bg-card rounded-2xl border border-border shadow-sm hidden md:block">
           <p className="text-[9px] uppercase tracking-wider text-muted-foreground font-bold mb-1">Workers</p>
-          <p className="text-lg md:text-xl font-bold font-mono text-foreground">4 Parallel</p>
+          <p className="text-lg md:text-xl font-bold font-mono text-foreground">Sequential</p>
         </div>
       </div>
 

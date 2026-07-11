@@ -18,10 +18,9 @@ export function SummaryCard({ onConfirm }: SummaryCardProps) {
   const { columnMappings } = usePreviewStore();
   const { settings, availableProviders } = useSettingsStore();
 
-  if (!fileMeta) return null;
-
   // Calculate estimated parameters
   const estimatedCost = useMemo(() => {
+    if (!fileMeta) return 0;
     let costPerRowUsd = 0.0;
     if (settings.aiProvider === 'openai') {
       costPerRowUsd = 0.0005;
@@ -34,18 +33,21 @@ export function SummaryCard({ onConfirm }: SummaryCardProps) {
     }
     const costInUsd = fileMeta.rows * costPerRowUsd;
     return costInUsd * 83.0; // Conversion rate: 1 USD = 83 INR
-  }, [fileMeta.rows, settings.aiProvider]);
+  }, [fileMeta, settings.aiProvider]);
 
   const estimatedTime = useMemo(() => {
+    if (!fileMeta) return 0;
     // Approx 1 batch of 50 takes 3 seconds
     const batches = Math.ceil(fileMeta.rows / 50);
     return Math.max(3, batches * 2.5);
-  }, [fileMeta.rows]);
+  }, [fileMeta]);
 
   // Check if critical fields are mapped
   const mappedFields = Object.values(columnMappings);
   const hasEmail = mappedFields.includes('email');
   const mappedCount = mappedFields.filter((f) => f !== '').length;
+
+  if (!fileMeta) return null;
 
   return (
     <Card className="shadow-sm flex flex-col justify-between h-full font-sans select-none">

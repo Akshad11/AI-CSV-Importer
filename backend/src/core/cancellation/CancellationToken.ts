@@ -1,4 +1,5 @@
 import { CancellationError } from "./CancellationError";
+import { logger } from "../../logger/logger";
 
 export class CancellationToken {
     private _isCancelled = false;
@@ -38,7 +39,7 @@ export class CancellationToken {
                 callback();
             } catch (error) {
                 // Log the callback error but continue executing other callbacks to guarantee isolation
-                console.error("Error executing cancellation callback:", error);
+                logger.error("Error executing cancellation callback", { error, module: "Cancellation", action: "Cancel Callback", status: "FAILED" });
             }
         }
     }
@@ -53,7 +54,7 @@ export class CancellationToken {
             try {
                 callback();
             } catch (error) {
-                console.error("Error executing cancellation callback immediately:", error);
+                logger.error("Error executing cancellation callback immediately", { error, module: "Cancellation", action: "Cancel Callback Immediately", status: "FAILED" });
             }
             return () => {};
         }

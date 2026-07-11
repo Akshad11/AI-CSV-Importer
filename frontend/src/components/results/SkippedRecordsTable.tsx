@@ -17,6 +17,7 @@ import { Input } from '../ui/input';
 import { Button } from '../ui/button';
 import { cn } from '../../lib/utils';
 import { Search, ChevronLeft, ChevronRight, AlertTriangle, Eye, EyeOff } from 'lucide-react';
+import { SkippedRecord } from '../../types';
 
 export function SkippedRecordsTable() {
   const { skippedRecords } = useResultsStore();
@@ -31,7 +32,7 @@ export function SkippedRecordsTable() {
     }));
   };
 
-  const columns = useMemo<ColumnDef<any>[]>(() => [
+  const columns = useMemo<ColumnDef<SkippedRecord>[]>(() => [
     {
       accessorKey: 'rowNumber',
       header: 'Row',

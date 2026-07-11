@@ -15,4 +15,15 @@ router.post(
     importerController.upload.bind(importerController)
 );
 
+router.post(
+    "/process",
+    uploadCsv,
+    importerController.process.bind(importerController)
+);
+
+router.post(
+    "/client-error",
+    importerController.logClientError.bind(importerController)
+);
+
 export default router;

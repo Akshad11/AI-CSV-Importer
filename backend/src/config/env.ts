@@ -13,6 +13,13 @@ const envSchema = z.object({
     MAX_FILE_SIZE: z.coerce.number().default(5 * 1024 * 1024),
 
     LOG_LEVEL: z.string().default("info"),
+
+    LOG_DIRECTORY: z.string().default("logs"),
+    LOG_FILE: z.string().default("log.txt"),
+    MAX_LOG_SIZE: z.coerce.number().default(10 * 1024 * 1024),
+    ENABLE_CONSOLE_LOGS: z.preprocess((val) => val === undefined || val === 'true' || val === true, z.boolean()).default(true),
+    ENABLE_FILE_LOGS: z.preprocess((val) => val === undefined || val === 'true' || val === true, z.boolean()).default(true),
+    ENABLE_DEBUG_LOGS: z.preprocess((val) => val === 'true' || val === true, z.boolean()).default(false),
 });
 
 const parsed = envSchema.safeParse(process.env);

@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 /**
  * Copy data array to user clipboard as formatted JSON
  */
-export function copyToClipboard(data: any[]) {
+export function copyToClipboard(data: CRMRecord[]) {
   try {
     const jsonStr = JSON.stringify(data, null, 2);
     navigator.clipboard.writeText(jsonStr);
@@ -17,7 +17,7 @@ export function copyToClipboard(data: any[]) {
 /**
  * Download data array as structured JSON file
  */
-export function downloadJson(data: any[], filename = 'extracted_leads.json') {
+export function downloadJson(data: CRMRecord[], filename = 'extracted_leads.json') {
   try {
     const jsonStr = JSON.stringify(data, null, 2);
     const blob = new Blob([jsonStr], { type: 'application/json' });

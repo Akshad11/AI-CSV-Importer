@@ -1,15 +1,3 @@
-import morgan from "morgan";
-import { logger } from "../logger/logger";
+import { requestLoggerMiddleware } from "../logger/RequestLogger";
 
-const stream = {
-    write: (message: string) => {
-        logger.info(message.trim());
-    },
-};
-
-export const requestLogger = morgan(
-    ":method :url :status :response-time ms",
-    {
-        stream,
-    }
-);
+export const requestLogger = requestLoggerMiddleware;

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback, useState } from 'react';
-import { useDropzone } from 'react-dropzone';
+import { useDropzone, FileRejection } from 'react-dropzone';
 import { motion } from 'framer-motion';
 import { UploadCloud, AlertCircle, RefreshCw } from 'lucide-react';
 import { APP_CONFIG } from '../../config';
@@ -20,7 +20,7 @@ export function UploadZone({ onSuccess }: UploadZoneProps) {
   const [parseProgress, setParseProgress] = useState(0);
 
   const onDrop = useCallback(
-    (acceptedFiles: File[], fileRejections: any[]) => {
+    (acceptedFiles: File[], fileRejections: FileRejection[]) => {
       // Clear previous errors
       setUploadError(null);
 

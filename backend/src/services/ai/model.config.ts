@@ -49,8 +49,8 @@ export const MODEL_CONFIGS: Record<string, ModelInformation> = {
         supportsStructuredOutput: true,
         supportsStreaming: true
     },
-    "gemini-2.5-flash": {
-        name: "gemini-2.5-flash",
+    "gemini-1.5-flash": {
+        name: "gemini-1.5-flash",
         contextWindow: 1000000,
         maxOutputTokens: 8192,
         costPer1kPrompt: 0.000075,

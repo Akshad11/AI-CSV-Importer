@@ -40,7 +40,7 @@ export class GeminiProvider implements IAIProvider {
     }
 
     async generate<T = unknown>(request: AIRequest): Promise<AIResponse<T>> {
-        const modelName = request.model || "gemini-2.5-flash";
+        const modelName = request.model || "gemini-1.5-flash";
         const genAI = this.getGenAI();
 
         return this.retryEngine.execute(
@@ -108,7 +108,7 @@ export class GeminiProvider implements IAIProvider {
     }
 
     async *stream(request: AIRequest): AsyncIterable<AIStreamChunk> {
-        const modelName = request.model || "gemini-2.5-flash";
+        const modelName = request.model || "gemini-1.5-flash";
         const genAI = this.getGenAI();
 
         const resultStream: any = await this.retryEngine.execute(
@@ -181,7 +181,7 @@ export class GeminiProvider implements IAIProvider {
                 available: true,
                 latencyMs: latency,
                 version: "v1",
-                model: "gemini-2.5-flash",
+                model: "gemini-1.5-flash",
                 configured: true,
                 authenticated: true
             };
@@ -204,8 +204,8 @@ export class GeminiProvider implements IAIProvider {
     }
 
     async getModelInformation(modelName?: string): Promise<ModelInformation> {
-        const name = modelName || "gemini-2.5-flash";
-        return MODEL_CONFIGS[name] || MODEL_CONFIGS["gemini-2.5-flash"];
+        const name = modelName || "gemini-1.5-flash";
+        return MODEL_CONFIGS[name] || MODEL_CONFIGS["gemini-1.5-flash"];
     }
 
     private convertSchema(jsonSchema: any): any {

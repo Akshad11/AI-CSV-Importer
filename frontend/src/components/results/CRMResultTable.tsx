@@ -19,6 +19,7 @@ import { Input } from '../ui/input';
 import { Button } from '../ui/button';
 import { Search, ChevronLeft, ChevronRight, SlidersHorizontal, EyeOff } from 'lucide-react';
 import { formatPercentage } from '../../utils';
+import { CRMRecord } from '../../types';
 
 export function CRMResultTable() {
   const { crmRecords } = useResultsStore();
@@ -28,7 +29,7 @@ export function CRMResultTable() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
 
   // Define TanStack Columns
-  const columns = useMemo<ColumnDef<any>[]>(() => [
+  const columns = useMemo<ColumnDef<CRMRecord>[]>(() => [
     {
       accessorKey: 'rowNumber',
       header: 'Row',

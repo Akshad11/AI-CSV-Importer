@@ -1,4 +1,5 @@
 import { EventTypeMap } from "./events";
+import { logger } from "../../logger/logger";
 
 export type EventHandler<T> = (payload: T) => void | Promise<void>;
 
@@ -84,7 +85,7 @@ export class EventBus {
                 await sub.handler(payload);
             } catch (error) {
                 // Enforce error isolation
-                console.error(`[EventBus] Error executing handler for event "${eventName}":`, error);
+                logger.error(`Error executing handler for event "${eventName}"`, { error, module: "EventBus", action: "Publish Event", status: "FAILED" });
             }
         });
 

@@ -69,7 +69,7 @@ export default function SettingsPage() {
 
   const providerOptions = [
     { value: 'openai', label: 'ChatGPT (gpt-4o-mini)' },
-    { value: 'gemini', label: 'Gemini (gemini-2.5-flash)' },
+    { value: 'gemini', label: 'Gemini (gemini-1.5-flash)' },
     { value: 'ollama', label: 'Local Llama (llama3 via Ollama)' },
     { value: 'mock', label: 'Mock Rule-Based Importer' },
   ].filter((opt) => {

@@ -40,7 +40,7 @@ export class OpenAIProvider implements IAIProvider {
     }
 
     async generate<T = unknown>(request: AIRequest): Promise<AIResponse<T>> {
-        const model = request.model || "gpt-5-mini";
+        const model = request.model || "gpt-4o-mini";
         const client = this.getClient();
 
         return this.retryEngine.execute(

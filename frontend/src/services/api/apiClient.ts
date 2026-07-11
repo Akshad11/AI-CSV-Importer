@@ -33,14 +33,15 @@ export async function retryRequest<T>(
   while (attempt < config.maxAttempts) {
     try {
       return await requestFn();
-    } catch (error: any) {
+    } catch (error: unknown) {
       attempt++;
       if (attempt >= config.maxAttempts) {
         throw error;
       }
 
       // Check if it's a rate limit or server error that warrants retry
-      const status = error.response?.status;
+      const axiosError = error as { response?: { status?: number } };
+      const status = axiosError.response?.status;
       const isRetryable =
         status === 429 || // Too Many Requests
         status === 500 || // Internal Server Error
@@ -77,7 +78,7 @@ apiClient.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {
     const status = error.response?.status;
-    const errorData = error.response?.data as any;
+    const errorData = error.response?.data as Record<string, unknown> | null;
 
     const errorDetails = {
       message: errorData?.message || 'A network error occurred. Please check your connection.',
@@ -86,13 +87,24 @@ apiClient.interceptors.response.use(
       errors: errorData?.errors || null,
     };
 
+    const requestId = (error.response?.headers?.['x-request-id'] as string) || 'n/a';
+
+    // Report client error to backend logger asynchronously without blocking
+    axios.post(`${APP_CONFIG.apiBaseUrl}/importer/client-error`, {
+      requestId,
+      error: errorDetails,
+      status: errorDetails.status
+    }).catch(() => {
+      // Fail silently to avoid loop
+    });
+
     // Global toast notices for severe errors
     if (status === 429) {
       toast.error('Rate limit exceeded. Please wait a moment before trying again.');
     } else if (status === 413) {
       toast.error('File size exceeds the maximum limit (5MB).');
     } else if (status === 500) {
-      toast.error('Internal server error occurred on backend AI pipelines.');
+      toast.error(`Internal server error occurred on backend AI pipelines. (Request ID: ${requestId})`);
     }
 
     return Promise.reject(errorDetails);

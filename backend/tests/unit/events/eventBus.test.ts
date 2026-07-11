@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { EventBus } from "../../../src/core/events/EventBus";
 import { ImportEventPayload } from "../../../src/core/events/events";
+import { logger } from "../../../src/logger/logger";
 
 describe("Event Bus", () => {
     it("notifies simple subscribers when publishing", async () => {
@@ -95,8 +96,8 @@ describe("Event Bus", () => {
             secondCalled = true;
         });
 
-        // Mock console.error to avoid cluttering test outputs
-        const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+        // Mock logger.error to avoid cluttering test outputs
+        const loggerSpy = vi.spyOn(logger, "error").mockImplementation(() => {});
 
         await expect(
             bus.publish("import:started", {
@@ -107,7 +108,7 @@ describe("Event Bus", () => {
         ).resolves.not.toThrow();
 
         expect(secondCalled).toBe(true);
-        expect(consoleSpy).toHaveBeenCalled();
-        consoleSpy.mockRestore();
+        expect(loggerSpy).toHaveBeenCalled();
+        loggerSpy.mockRestore();
     });
 });

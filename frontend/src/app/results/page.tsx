@@ -35,19 +35,19 @@ export default function ResultsPage() {
     }
   }, [stats, fileMeta, router]);
 
-  // Fallback statistics if page is viewed without an active upload (e.g. from history placeholder)
+  // Fallback statistics if page is viewed without an active upload
   const finalStats = stats || {
-    imported: crmRecords.length || 1250,
-    skipped: skippedRecords.length || 24,
-    failed: 5,
-    warnings: 12,
-    processingTime: 45,
-    averageConfidence: 94,
-    recordsPerSecond: 28.5,
-    totalCost: 0.65,
+    imported: crmRecords.length || 0,
+    skipped: skippedRecords.length || 0,
+    failed: 0,
+    warnings: 0,
+    processingTime: 0,
+    averageConfidence: 0,
+    recordsPerSecond: 0,
+    totalCost: 0,
   };
 
-  const successRate = finalStats.imported > 0
+  const successRate = (finalStats.imported + finalStats.skipped) > 0
     ? (finalStats.imported / (finalStats.imported + finalStats.skipped)) * 100
     : 0;
 
