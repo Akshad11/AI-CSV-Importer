@@ -38,6 +38,7 @@ export default function ProcessingPage() {
 
   const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const startedRef = useRef(false);
 
   // Trigger extraction pipeline on mount
   useEffect(() => {
@@ -47,23 +48,35 @@ export default function ProcessingPage() {
       return;
     }
 
+    if (status !== 'running') {
+      startedRef.current = false;
+      return;
+    }
+
+    if (startedRef.current) {
+      return;
+    }
+    startedRef.current = true;
+
     let isAborted = false;
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
 
-    // Start API call if we are running
-    if (status === 'running') {
-      const controller = new AbortController();
-      abortControllerRef.current = controller;
+    let uploadTimer: NodeJS.Timeout;
+    let logsTimer1: NodeJS.Timeout;
+    let logsTimer2: NodeJS.Timeout;
+    let logsTimer3: NodeJS.Timeout;
 
-      const runProcess = async () => {
-        try {
-          addLog({
-            message: `[UPLOAD] Initializing server connection. Uploading CSV file (size: ${fileMeta.size} bytes)...`,
-            type: 'info'
-          });
+    const runProcess = async () => {
+      try {
+        addLog({
+          message: `[UPLOAD] Initializing server connection. Uploading CSV file (size: ${fileMeta.size} bytes)...`,
+          type: 'info'
+        });
 
-          let uploadFinished = false;
+        let uploadFinished = false;
 
-          const uploadTimer = setTimeout(() => {
+        uploadTimer = setTimeout(() => {
             if (!uploadFinished && !isAborted) {
               addLog({
                 message: `[UPLOAD] Upload still in progress. Please wait...`,
@@ -74,7 +87,7 @@ export default function ProcessingPage() {
 
           let model = 'mock-model';
           if (settings.aiProvider === 'openai') model = 'gpt-4o-mini';
-          else if (settings.aiProvider === 'gemini') model = 'gemini-1.5-flash';
+          else if (settings.aiProvider === 'gemini') model = 'gemini-3.5-flash';
           else if (settings.aiProvider === 'ollama') model = 'llama3';
 
           const responsePromise = ImportService.processCsv({
@@ -100,7 +113,7 @@ export default function ProcessingPage() {
             }
           });
 
-          const logsTimer1 = setTimeout(() => {
+          logsTimer1 = setTimeout(() => {
             if (!isAborted) {
               addLog({
                 message: `[PARSE] Upload complete. Server is parsing CSV rows and validating headers...`,
@@ -115,7 +128,7 @@ export default function ProcessingPage() {
             }
           }, 1500);
 
-          const logsTimer2 = setTimeout(() => {
+          logsTimer2 = setTimeout(() => {
             if (!isAborted) {
               addLog({
                 message: `[AI] AI Ingestion Pipeline active. Extracting CRM fields using provider [${settings.aiProvider}] with model [${model}]...`,
@@ -134,7 +147,7 @@ export default function ProcessingPage() {
             }
           }, 4000);
 
-          const logsTimer3 = setTimeout(() => {
+          logsTimer3 = setTimeout(() => {
             if (!isAborted) {
               addLog({
                 message: `[VALIDATION] Running lead schema validations (Zod constraints checking)...`,
@@ -224,16 +237,15 @@ export default function ProcessingPage() {
       };
 
       runProcess();
-    }
 
     // Cleanup on unmount
     return () => {
-      isAborted = true;
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
+      clearTimeout(uploadTimer);
+      clearTimeout(logsTimer1);
+      clearTimeout(logsTimer2);
+      clearTimeout(logsTimer3);
     };
-  }, [fileMeta, file, columnMappings, settings, status, router, updateProgress, addLog, completeProcessing, failProcessing]);
+  }, [status]);
 
   const percentage = totalRows > 0 ? (processedRows / totalRows) * 100 : 0;
 

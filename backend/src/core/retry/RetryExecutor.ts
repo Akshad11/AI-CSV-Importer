@@ -254,7 +254,7 @@ export class RetryExecutor {
                 });
 
                 if (this.strategy.shouldRetry(error, context)) {
-                    const delay = DelayStrategy.calculate(
+                    let delay = DelayStrategy.calculate(
                         attempt,
                         this.options.delayStrategy,
                         this.options.initialDelayMs,
@@ -265,6 +265,32 @@ export class RetryExecutor {
                         this.options.customDelayCalculator,
                         error
                     );
+
+                    // Parse potential Retry-After directives from the error
+                    let retryAfterMs: number | undefined = undefined;
+                    if (typeof (error as any).retryAfterSeconds === "number") {
+                        retryAfterMs = (error as any).retryAfterSeconds * 1000;
+                    } else if (typeof (error as any).retryAfter === "number") {
+                        // Support either seconds or milliseconds based on scale
+                        const val = (error as any).retryAfter;
+                        retryAfterMs = val > 1000 ? val : val * 1000;
+                    } else if ((error as any).headers && (error as any).headers["retry-after"]) {
+                        const parsed = parseInt((error as any).headers["retry-after"], 10);
+                        if (!isNaN(parsed) && parsed > 0) {
+                            retryAfterMs = parsed * 1000;
+                        }
+                    }
+
+                    if (retryAfterMs !== undefined && retryAfterMs > 0) {
+                        // Respect Retry-After directive, capping it at options.maxDelayMs for stability
+                        delay = Math.min(retryAfterMs, this.options.maxDelayMs);
+                        this.logger?.info(
+                            `[RetryExecutor] Detected Retry-After. Delaying next attempt for [${this.operationName}] by ${delay}ms`
+                        );
+                    }
+
+                    // Enforce a minimum delay floor to prevent immediate retries (e.g. 100ms)
+                    delay = Math.max(100, delay);
 
                     stats.totalDelayMs += delay;
                     stats.backoffTimeMs += delay;

@@ -87,10 +87,15 @@ apiClient.interceptors.response.use(
       errors: errorData?.errors || null,
     };
 
+    // Ignore intentional request aborts / cancellations in diagnostic logging
+    if (axios.isCancel(error)) {
+      return Promise.reject(errorDetails);
+    }
+
     const requestId = (error.response?.headers?.['x-request-id'] as string) || 'n/a';
 
     // Report client error to backend logger asynchronously without blocking
-    axios.post(`${APP_CONFIG.apiBaseUrl}/importer/client-error`, {
+    axios.post(`${APP_CONFIG.apiBaseUrl}/client-error`, {
       requestId,
       error: errorDetails,
       status: errorDetails.status

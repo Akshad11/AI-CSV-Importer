@@ -20,6 +20,10 @@ const envSchema = z.object({
     ENABLE_CONSOLE_LOGS: z.preprocess((val) => val === undefined || val === 'true' || val === true, z.boolean()).default(true),
     ENABLE_FILE_LOGS: z.preprocess((val) => val === undefined || val === 'true' || val === true, z.boolean()).default(true),
     ENABLE_DEBUG_LOGS: z.preprocess((val) => val === 'true' || val === true, z.boolean()).default(false),
+
+    MONGODB_URI: z.string().default("mongodb://localhost:27017/ai_csv_importer"),
+    MONGODB_POOL_SIZE: z.coerce.number().default(10),
+    MONGODB_CONNECT_TIMEOUT_MS: z.coerce.number().default(30000),
 });
 
 const parsed = envSchema.safeParse(process.env);

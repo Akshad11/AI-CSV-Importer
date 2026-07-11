@@ -1,18 +1,19 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useSettingsStore, useResultsStore, useThemeStore } from '../../store';
 import { PageContainer } from '../../components/common/PageContainer';
+import { ImportService } from '../../services/api/importService';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Select } from '../../components/ui/select';
 import { Dialog } from '../../components/ui/dialog';
 import { toast } from 'sonner';
-import { Settings, Sliders, AlertTriangle, ShieldCheck, Sun, Moon, Laptop, Trash2 } from 'lucide-react';
+import { Settings, Sliders, AlertTriangle, ShieldCheck, Sun, Moon, Laptop, Trash2, RefreshCw } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
 // Zod Validation Schema for configuration preferences
@@ -34,8 +35,65 @@ export default function SettingsPage() {
   const { settings, updateSettings, resetSettings, availableProviders } = useSettingsStore();
   const { clearHistory, history } = useResultsStore();
   const { theme, setTheme } = useThemeStore();
-  
+
   const [isDangerDialogOpen, setIsDangerDialogOpen] = useState(false);
+
+  // AI Connection Test State
+  const [testProvider, setTestProvider] = useState<'openai' | 'gemini' | 'ollama'>('gemini');
+  const [testModel, setTestModel] = useState<string>('gemini-3.5-flash');
+  const [testPrompt, setTestPrompt] = useState<string>('Hello');
+  const [isTesting, setIsTesting] = useState(false);
+  const [testResult, setTestResult] = useState<any>(null);
+  const [testError, setTestError] = useState<any>(null);
+
+  const testModelOptions = {
+    openai: [
+      { value: 'gpt-4o-mini', label: 'gpt-4o-mini' },
+      { value: 'gpt-4o', label: 'gpt-4o' },
+      { value: 'o1-mini', label: 'o1-mini' }
+    ],
+    gemini: [
+      { value: 'gemini-3.5-flash', label: 'gemini-3.5-flash' },
+      { value: 'gemini-1.5-flash', label: 'gemini-1.5-flash' },
+      { value: 'gemini-1.5-pro', label: 'gemini-1.5-pro' }
+    ],
+    ollama: [
+      { value: 'llama3', label: 'llama3' },
+      { value: 'qwen2.5-coder:3b', label: 'qwen2.5-coder:3b' },
+      { value: 'mistral', label: 'mistral' }
+    ]
+  };
+
+  useEffect(() => {
+    const defaultModels = {
+      openai: 'gpt-4o-mini',
+      gemini: 'gemini-3.5-flash',
+      ollama: 'llama3'
+    };
+    setTestModel(defaultModels[testProvider]);
+  }, [testProvider]);
+
+  const handleTestConnection = async () => {
+    setIsTesting(true);
+    setTestResult(null);
+    setTestError(null);
+    try {
+      const data = await ImportService.testConnection({
+        provider: testProvider,
+        model: testModel,
+        prompt: testPrompt
+      });
+      setTestResult(data);
+      toast.success('AI provider is working successfully.');
+    } catch (err: any) {
+      console.error(err);
+      const mappedError = err.errors || err;
+      setTestError(mappedError);
+      toast.error(mappedError.message || 'AI Connection Test failed.');
+    } finally {
+      setIsTesting(false);
+    }
+  };
 
   // Initialize React Hook Form
   const {
@@ -55,10 +113,46 @@ export default function SettingsPage() {
     },
   });
 
-  const onSubmit = (values: SettingsFormValues) => {
-    updateSettings(values);
-    toast.success('System preferences saved successfully!');
-    reset(values); // reset dirty state
+  // Load settings on mount
+  useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        const backendSettings = await ImportService.getSettings();
+        if (backendSettings) {
+          const mapped = {
+            aiProvider: backendSettings.defaultAiProvider || settings.aiProvider,
+            rowsPerPage: backendSettings.rowsPerPage || settings.rowsPerPage,
+          };
+          updateSettings(mapped);
+          reset({
+            confidenceThreshold: settings.confidenceThreshold,
+            defaultLeadSource: settings.defaultLeadSource,
+            rowsPerPage: backendSettings.rowsPerPage || settings.rowsPerPage,
+            animationSpeed: settings.animationSpeed,
+            defaultPreviewRows: settings.defaultPreviewRows,
+            aiProvider: backendSettings.defaultAiProvider || settings.aiProvider,
+          });
+        }
+      } catch (err) {
+        console.error('Failed to load settings from backend', err);
+      }
+    };
+    loadSettings();
+  }, [reset]);
+
+  const onSubmit = async (values: SettingsFormValues) => {
+    try {
+      updateSettings(values);
+      await ImportService.updateSettings({
+        defaultAiProvider: values.aiProvider,
+        defaultModel: values.aiProvider === 'openai' ? 'gpt-4o-mini' : values.aiProvider === 'gemini' ? 'gemini-3.5-flash' : 'llama3',
+        rowsPerPage: values.rowsPerPage,
+      });
+      toast.success('System preferences saved successfully!');
+      reset(values); // reset dirty state
+    } catch (err) {
+      toast.error('Failed to save settings to backend');
+    }
   };
 
   const handleClearHistory = () => {
@@ -69,7 +163,7 @@ export default function SettingsPage() {
 
   const providerOptions = [
     { value: 'openai', label: 'ChatGPT (gpt-4o-mini)' },
-    { value: 'gemini', label: 'Gemini (gemini-1.5-flash)' },
+    { value: 'gemini', label: 'Gemini (gemini-3.5-flash)' },
     { value: 'ollama', label: 'Local Llama (llama3 via Ollama)' },
     { value: 'mock', label: 'Mock Rule-Based Importer' },
   ].filter((opt) => {
@@ -270,6 +364,156 @@ export default function SettingsPage() {
                   System
                 </button>
               </div>
+            </CardContent>
+          </Card>
+
+          {/* AI Connection Test Card */}
+          <Card className="shadow-sm">
+            <CardHeader className="pb-3 border-b border-border mb-4 bg-muted/30">
+              <div className="flex items-center gap-2 text-primary">
+                <ShieldCheck className="h-5 w-5" />
+                <CardTitle className="text-base font-bold text-foreground">
+                  AI Connection Test
+                </CardTitle>
+              </div>
+              <CardDescription>Verify AI credential mappings before importing</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Provider Selector */}
+              <div>
+                <label className="block text-xs font-semibold text-muted-foreground mb-1">
+                  AI Provider
+                </label>
+                <select
+                  disabled={isTesting}
+                  value={testProvider}
+                  onChange={(e) => setTestProvider(e.target.value as any)}
+                  className="w-full h-10 px-3 rounded-lg border border-input bg-background text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  aria-label="Select AI provider for testing"
+                >
+                  <option value="gemini">Gemini</option>
+                  <option value="openai">OpenAI</option>
+                  <option value="ollama">Ollama (Local Llama)</option>
+                </select>
+              </div>
+
+              {/* Model Selector */}
+              <div>
+                <label className="block text-xs font-semibold text-muted-foreground mb-1">
+                  Model name
+                </label>
+                <select
+                  disabled={isTesting}
+                  value={testModel}
+                  onChange={(e) => setTestModel(e.target.value)}
+                  className="w-full h-10 px-3 rounded-lg border border-input bg-background text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  aria-label="Select AI model for testing"
+                >
+                  {testModelOptions[testProvider].map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Editable Prompt */}
+              <div>
+                <label className="block text-xs font-semibold text-muted-foreground mb-1">
+                  User Prompt
+                </label>
+                <textarea
+                  disabled={isTesting}
+                  value={testPrompt}
+                  onChange={(e) => setTestPrompt(e.target.value)}
+                  rows={2}
+                  className="w-full p-2 text-sm rounded-lg border border-input bg-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50 resize-none font-mono"
+                  placeholder="Enter test prompt..."
+                  aria-label="Prompt text input for testing"
+                />
+              </div>
+
+              {/* Test Button */}
+              <Button
+                type="button"
+                onClick={handleTestConnection}
+                disabled={isTesting}
+                className="w-full text-xs"
+                aria-label="Test AI connection"
+              >
+                {isTesting ? (
+                  <>
+                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                    Testing AI...
+                  </>
+                ) : (
+                  'Test AI'
+                )}
+              </Button>
+
+              {/* Test Output Results */}
+              {(testResult || testError) && (
+                <div className="pt-3 border-t border-border mt-3 space-y-3">
+                  {testResult && (
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1.5">
+                          <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                          <span className="text-xs font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/20 px-2 py-0.5 rounded-full">
+                            Connected
+                          </span>
+                        </div>
+                        <span className="text-[10px] text-muted-foreground font-mono">
+                          {testResult.latencyMs}ms
+                        </span>
+                      </div>
+                      
+                      {/* Tokens stats */}
+                      <div className="grid grid-cols-3 gap-1 bg-muted/40 p-2 rounded-lg text-center text-[10px] font-mono select-none">
+                        <div>
+                          <div className="text-muted-foreground">Prompt</div>
+                          <div className="font-bold text-foreground">{testResult.tokens?.prompt || 0}</div>
+                        </div>
+                        <div>
+                          <div className="text-muted-foreground">Comp</div>
+                          <div className="font-bold text-foreground">{testResult.tokens?.completion || 0}</div>
+                        </div>
+                        <div>
+                          <div className="text-muted-foreground">Total</div>
+                          <div className="font-bold text-foreground">{testResult.tokens?.total || 0}</div>
+                        </div>
+                      </div>
+
+                      {/* Response view */}
+                      <div className="p-2.5 rounded-lg border border-border bg-muted/20 text-xs text-foreground max-h-36 overflow-y-auto font-sans leading-relaxed whitespace-pre-wrap">
+                        {testResult.response}
+                      </div>
+                    </div>
+                  )}
+
+                  {testError && (
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1.5">
+                          <span className="h-2.5 w-2.5 rounded-full bg-destructive" />
+                          <span className="text-xs font-bold text-destructive bg-destructive/10 px-2 py-0.5 rounded-full">
+                            Error
+                          </span>
+                        </div>
+                      </div>
+                      
+                      <div className="p-2.5 rounded-lg border border-destructive/20 bg-destructive/5 text-xs text-destructive flex flex-col gap-1">
+                        <span className="font-semibold">❌ {testError.message || 'Provider Unavailable'}</span>
+                        {testError.retryAfter && (
+                          <span className="text-[10px] text-destructive/80 font-mono">
+                            Try again in {testError.retryAfter} seconds.
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </CardContent>
           </Card>
 

@@ -87,7 +87,7 @@ export class BatchStage implements IStage<CsvRow, CsvBatch> {
 
     async *execute(input: AsyncIterable<CsvRow>, context: ImportContext): AsyncIterable<CsvBatch> {
         try {
-            const batchStream = this.batchService.create(input, context.batchSize);
+            const batchStream = this.batchService.create(input, context);
             
             for await (const batch of batchStream) {
                 context.cancellationToken.throwIfCancelled();
@@ -203,10 +203,25 @@ export class AIStage implements IStage<
                 if (!response || !response.success) {
                     throw new Error(response?.data ? String(response.data) : "AI provider returned failure");
                 }
-            } catch (error) {
+
+                // Scale up batch size on success if adaptive batching is enabled
+                if (process.env.AI_ADAPTIVE_BATCH !== "false" && context.batchSize < context.initialBatchSize) {
+                    const prevSize = context.batchSize;
+                    context.batchSize = Math.min(context.initialBatchSize, context.batchSize + 2);
+                    context.logger.info(`[Adaptive Batch] Scaled up batch size from ${prevSize} to ${context.batchSize} after successful AI request.`);
+                }
+            } catch (error: any) {
                 if (error instanceof CancellationError) {
                     throw error;
                 }
+
+                // Scale down batch size on failure if adaptive batching is enabled
+                if (process.env.AI_ADAPTIVE_BATCH !== "false") {
+                    const prevSize = context.batchSize;
+                    context.batchSize = Math.max(1, Math.floor(context.batchSize * 0.5));
+                    context.logger.warn(`[Adaptive Batch] Scaled down batch size from ${prevSize} to ${context.batchSize} due to AI request failure: ${error.message}`);
+                }
+
                 throw new AIProviderError(
                     "AI provider generation failed: " + (error as Error).message, 
                     error as Error
@@ -264,9 +279,9 @@ export class ValidatorStage implements IStage<
                 context.metadata
             );
 
+            let responseStr = "";
             let validatedData: CrmLead[];
             try {
-                let responseStr: string;
                 if (typeof item.response.data === "string") {
                     responseStr = item.response.data;
                 } else {
@@ -280,7 +295,13 @@ export class ValidatorStage implements IStage<
                 }
 
                 const errorMessage = (error as Error).message;
-                if (error instanceof SyntaxError || errorMessage.includes("Unexpected token") || errorMessage.includes("No JSON array found")) {
+                if (
+                    error instanceof SyntaxError || 
+                    errorMessage.includes("Unexpected token") || 
+                    errorMessage.includes("No JSON array found") ||
+                    errorMessage.includes("Expected property name")
+                ) {
+                    context.logger.error(`JSON Parsing Failed for batch ${item.batch.batchNumber}. Raw AI string:\n${responseStr}\n`);
                     throw new JsonParsingError(
                         `JSON parsing failed for batch ${item.batch.batchNumber}: ${errorMessage}`, 
                         error as Error

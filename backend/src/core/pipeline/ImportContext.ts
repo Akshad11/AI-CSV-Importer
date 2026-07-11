@@ -25,7 +25,8 @@ export class ImportContext {
     public readonly requestId: string;
     public readonly provider: string;
     public readonly model: string;
-    public readonly batchSize: number;
+    public batchSize: number;
+    public readonly initialBatchSize: number;
     public readonly filePath: string;
     public readonly originalFileName: string;
     public readonly startedAt: Date;
@@ -45,6 +46,7 @@ export class ImportContext {
         this.provider = options.provider;
         this.model = options.model;
         this.batchSize = options.batchSize;
+        this.initialBatchSize = options.batchSize;
         this.filePath = options.filePath;
         this.originalFileName = options.originalFileName;
         this.startedAt = new Date();

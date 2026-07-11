@@ -84,5 +84,29 @@ export const ImportService = {
 
     return data;
   },
+
+  /**
+   * Get application settings from backend
+   */
+  async getSettings(): Promise<any> {
+    const { data } = await apiClient.get('/settings');
+    return data.data;
+  },
+
+  /**
+   * Update application settings on backend
+   */
+  async updateSettings(settings: any): Promise<any> {
+    const { data } = await apiClient.put('/settings', settings);
+    return data.data;
+  },
+
+  /**
+   * Test AI Connection on backend
+   */
+  async testConnection(params: { provider: string; model: string; prompt: string }): Promise<any> {
+    const { data } = await apiClient.post('../ai/test', params);
+    return data.data;
+  },
 };
 export default ImportService;

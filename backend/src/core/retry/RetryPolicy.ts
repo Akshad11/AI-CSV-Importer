@@ -12,8 +12,8 @@ export class RetryPolicy {
             multiplier: 2,
             jitter: "decorrelated",
             delayStrategy: "exponential",
-            timeoutMs: 60000,
-            attemptTimeoutMs: 30000,
+            timeoutMs: 600000, // 10 minutes overall timeout
+            attemptTimeoutMs: 300000, // 5 minutes attempt timeout
             ...custom
         };
     }

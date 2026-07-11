@@ -26,4 +26,25 @@ Some explanation
         expect(result[0].email)
             .toBe("john.doe@example.com");
     });
+
+    it("repairs and validates AI output with single quotes and unquoted keys", () => {
+        const response = `
+        {
+            'records': [
+                {
+                    name: "John Doe",
+                    'email': 'john.doe@example.com',
+                    company: 'GrowEasy',
+                    mobile_without_country_code: "9876543210",
+                    crm_status: "GOOD_LEAD_FOLLOW_UP",
+                }
+            ]
+        }
+        `;
+
+        const result = responseValidator.validate(response);
+        expect(result.length).toBe(1);
+        expect(result[0].email).toBe("john.doe@example.com");
+        expect(result[0].company).toBe("GrowEasy");
+    });
 });

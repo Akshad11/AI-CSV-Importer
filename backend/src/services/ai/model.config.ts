@@ -58,6 +58,15 @@ export const MODEL_CONFIGS: Record<string, ModelInformation> = {
         supportsStructuredOutput: true,
         supportsStreaming: true
     },
+    "gemini-3.5-flash": {
+        name: "gemini-3.5-flash",
+        contextWindow: 1000000,
+        maxOutputTokens: 8192,
+        costPer1kPrompt: 0.000075,
+        costPer1kCompletion: 0.0003,
+        supportsStructuredOutput: true,
+        supportsStreaming: true
+    },
     "gemini-flash-lite": {
         name: "gemini-flash-lite",
         contextWindow: 1000000,
@@ -113,7 +122,7 @@ export const MODEL_CONFIGS: Record<string, ModelInformation> = {
 
 export const DEFAULT_MODEL_CONFIGS: Record<string, string> = {
     openai: "gpt-5-mini",
-    gemini: "gemini-2.5-flash",
+    gemini: "gemini-3.5-flash",
     claude: "claude-3-5-sonnet",
     azure: "gpt-4o",
     ollama: "ollama-local",

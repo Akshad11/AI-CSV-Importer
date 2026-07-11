@@ -35,6 +35,15 @@ export function Header() {
           if (response.data?.data?.providers) {
             setAvailableProviders(response.data.data.providers);
           }
+          if (response.data?.data?.preferredConfig) {
+            const { defaultAiProvider } = response.data.data.preferredConfig;
+            const currentProvider = useSettingsStore.getState().settings.aiProvider;
+            if (currentProvider !== defaultAiProvider) {
+              useSettingsStore.getState().updateSettings({
+                aiProvider: defaultAiProvider
+              });
+            }
+          }
         } else {
           setConnectionStatus('offline');
           setAvailableProviders({ openai: false, gemini: false, ollama: false, mock: true });

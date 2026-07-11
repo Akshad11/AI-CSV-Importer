@@ -14,6 +14,8 @@ import { errorHandler } from "./errors/errorHandler";
 import { env } from "./config/env";
 import { logger } from "./logger/logger";
 import { ErrorLogger } from "./logger/ErrorLogger";
+import { mongoConnection } from "./database/connection";
+import { DatabaseSeeder } from "./database/seeders/DatabaseSeeder";
 
 // Register process-wide exception and rejection interceptors
 ErrorLogger.registerHandlers();
@@ -54,19 +56,33 @@ app.use(notFoundMiddleware);
 app.use(errorHandler);
 
 const PORT = env.PORT;
-const server = app.listen(PORT, () => {
-    logger.info(`Server is running on port ${PORT}`, { module: "System", action: "Server Started", status: "SUCCESS" });
-});
 
-const gracefulShutdown = (signal: string) => {
-    logger.info(`Received ${signal}. Shutting down gracefully...`, { module: "System", action: "Graceful Shutdown", status: "SUCCESS" });
-    server.close(() => {
-        logger.info("HTTP server closed. Application shutdown complete.", { module: "System", action: "Application Shutdown", status: "SUCCESS" });
-        process.exit(0);
-    });
+const start = async () => {
+    try {
+        await mongoConnection.connect();
+        await DatabaseSeeder.seed();
+        
+        const server = app.listen(PORT, () => {
+            logger.info(`Server is running on port ${PORT}`, { module: "System", action: "Server Started", status: "SUCCESS" });
+        });
+
+        const gracefulShutdown = async (signal: string) => {
+            logger.info(`Received ${signal}. Shutting down gracefully...`, { module: "System", action: "Graceful Shutdown", status: "SUCCESS" });
+            server.close(async () => {
+                await mongoConnection.disconnect();
+                logger.info("HTTP server closed. Application shutdown complete.", { module: "System", action: "Application Shutdown", status: "SUCCESS" });
+                process.exit(0);
+            });
+        };
+
+        process.on("SIGINT", () => gracefulShutdown("SIGINT"));
+        process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
+    } catch (error: any) {
+        logger.fatal(`Failed to start server: ${error.message}`, error);
+        process.exit(1);
+    }
 };
 
-process.on("SIGINT", () => gracefulShutdown("SIGINT"));
-process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
+start();
 
 export default app;

@@ -14,7 +14,11 @@ export class OllamaProvider implements IAIProvider {
     private readonly url: string;
 
     constructor() {
-        this.url = process.env.OLLAMA_URL || "http://localhost:11434";
+        let url = process.env.OLLAMA_URL || process.env.LOCAL_LLAMA_URL || "http://127.0.0.1:11434";
+        if (url.includes("localhost")) {
+            url = url.replace("localhost", "127.0.0.1");
+        }
+        this.url = url;
     }
 
     async generate<T = unknown>(request: AIRequest): Promise<AIResponse<T>> {

@@ -40,7 +40,86 @@ export class GeminiProvider implements IAIProvider {
     }
 
     async generate<T = unknown>(request: AIRequest): Promise<AIResponse<T>> {
-        const modelName = request.model || "gemini-1.5-flash";
+        const modelName = request.model || process.env.GEMINI_MODEL || "gemini-3.5-flash";
+
+        if (modelName.includes("gemini-3.5")) {
+            return this.retryEngine.execute(
+                async () => {
+                    const start = Date.now();
+                    const apiKey = process.env.GEMINI_API_KEY || "";
+                    if (!apiKey) {
+                        throw new Error("Missing GEMINI_API_KEY environment variable");
+                    }
+
+                    let res: Response;
+                    try {
+                        res = await fetch("https://generativelanguage.googleapis.com/v1beta/interactions", {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                                "x-goog-api-key": apiKey
+                            },
+                            body: JSON.stringify({
+                                model: modelName,
+                                input: `${request.system}\n\n${request.user}`
+                            })
+                        });
+                    } catch (fetchError: any) {
+                        // Import logger dynamically to avoid circular references if any
+                        const { logger } = require("../../../logger/logger");
+                        logger.error(`Fetch attempt to Gemini Interactions API failed for model ${modelName}`, fetchError, {
+                            model: modelName,
+                            message: fetchError.message,
+                            code: fetchError.code
+                        });
+                        throw fetchError;
+                    }
+
+                    if (!res.ok) {
+                        const errText = await res.text();
+                        const { logger } = require("../../../logger/logger");
+                        logger.error(`Gemini Interactions API returned error status ${res.status}`, undefined, {
+                            status: res.status,
+                            body: errText
+                        });
+                        throw new Error(`Gemini Interactions API returned status ${res.status}: ${errText}`);
+                    }
+
+                    const payload = (await res.json()) as any;
+                    const outputStep = payload.steps?.find((step: any) => step.type === "model_output");
+                    const text = outputStep?.content?.[0]?.text || "";
+                    if (!text) {
+                        throw new Error("Empty response from Gemini Interactions API");
+                    }
+
+                    let responseData: any;
+                    if (request.responseSchema) {
+                        responseData = JSON.parse(text);
+                    } else {
+                        responseData = text;
+                    }
+
+                    const usage = TokenUsageCalculator.createUsage(
+                        modelName,
+                        payload.usage?.total_input_tokens || 0,
+                        payload.usage?.total_output_tokens || 0
+                    );
+
+                    return {
+                        success: true,
+                        provider: "gemini",
+                        model: modelName,
+                        data: responseData as T,
+                        usage,
+                        latencyMs: Date.now() - start
+                    };
+                },
+                "ai",
+                undefined,
+                `gemini:generate:${modelName}`
+            );
+        }
+
         const genAI = this.getGenAI();
 
         return this.retryEngine.execute(
@@ -108,7 +187,18 @@ export class GeminiProvider implements IAIProvider {
     }
 
     async *stream(request: AIRequest): AsyncIterable<AIStreamChunk> {
-        const modelName = request.model || "gemini-1.5-flash";
+        const modelName = request.model || process.env.GEMINI_MODEL || "gemini-3.5-flash";
+
+        if (modelName.includes("gemini-3.5")) {
+            const response = await this.generate<string>(request);
+            yield {
+                text: response.data,
+                usage: response.usage,
+                isLast: true
+            };
+            return;
+        }
+
         const genAI = this.getGenAI();
 
         const resultStream: any = await this.retryEngine.execute(
@@ -173,15 +263,33 @@ export class GeminiProvider implements IAIProvider {
             const start = Date.now();
             const genAI = this.getGenAI();
 
-            const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-            await model.countTokens("ping");
+            const activeModel = process.env.GEMINI_MODEL || "gemini-3.5-flash";
+            if (activeModel.includes("gemini-3.5")) {
+                const res = await fetch("https://generativelanguage.googleapis.com/v1beta/interactions", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "x-goog-api-key": process.env.GEMINI_API_KEY || ""
+                    },
+                    body: JSON.stringify({
+                        model: activeModel,
+                        input: "ping"
+                    })
+                });
+                if (!res.ok) {
+                    throw new Error(`Interactions health check returned status ${res.status}`);
+                }
+            } else {
+                const model = genAI.getGenerativeModel({ model: activeModel });
+                await model.countTokens("ping");
+            }
 
             const latency = Date.now() - start;
             return {
                 available: true,
                 latencyMs: latency,
                 version: "v1",
-                model: "gemini-1.5-flash",
+                model: activeModel,
                 configured: true,
                 authenticated: true
             };
@@ -204,8 +312,8 @@ export class GeminiProvider implements IAIProvider {
     }
 
     async getModelInformation(modelName?: string): Promise<ModelInformation> {
-        const name = modelName || "gemini-1.5-flash";
-        return MODEL_CONFIGS[name] || MODEL_CONFIGS["gemini-1.5-flash"];
+        const name = modelName || process.env.GEMINI_MODEL || "gemini-3.5-flash";
+        return MODEL_CONFIGS[name] || MODEL_CONFIGS["gemini-3.5-flash"];
     }
 
     private convertSchema(jsonSchema: any): any {

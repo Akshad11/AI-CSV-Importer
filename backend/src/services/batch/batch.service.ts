@@ -6,7 +6,7 @@ import { DEFAULT_BATCH_SIZE } from "./batch.constants";
 export class BatchService {
     async *create(
         rows: AsyncIterable<CsvRow>,
-        batchSize = DEFAULT_BATCH_SIZE
+        batchSizeOrContext: number | { batchSize: number } = DEFAULT_BATCH_SIZE
     ): AsyncGenerator<CsvBatch> {
         let currentBatch: CsvRow[] = [];
         let batchNumber = 1;
@@ -14,7 +14,11 @@ export class BatchService {
         for await (const row of rows) {
             currentBatch.push(row);
 
-            if (currentBatch.length >= batchSize) {
+            const activeBatchSize = typeof batchSizeOrContext === "number"
+                ? batchSizeOrContext
+                : batchSizeOrContext.batchSize;
+
+            if (currentBatch.length >= activeBatchSize) {
                 yield {
                     id: randomUUID(),
                     batchNumber,
