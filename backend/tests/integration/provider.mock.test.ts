@@ -9,7 +9,7 @@ import { PromptBuilderService } from "../../src/services/ai/promptBuilder.servic
 import { ResponseValidatorService } from "../../src/services/validation/responseValidator.service";
 import { EventBus } from "../../src/core/events/EventBus";
 import { AIProviderResolver } from "../../src/services/ai/AIProviderResolver";
-import { IAIProvider } from "../../src/services/ai/ai.provider";
+import { MockAIProvider } from "../mocks/MockAIProvider";
 import { ILogger } from "../../src/core/interfaces/ILogger";
 import {
     AIProviderError,
@@ -17,8 +17,8 @@ import {
     JsonParsingError
 } from "../../src/orchestrator/Orchestrator.errors";
 
-class FailingProvider implements IAIProvider {
-    async generate(): Promise<any> {
+class FailingProvider extends MockAIProvider {
+    override async generate(): Promise<any> {
         return {
             success: false,
             provider: "mock",
@@ -28,8 +28,8 @@ class FailingProvider implements IAIProvider {
     }
 }
 
-class InvalidJsonProvider implements IAIProvider {
-    async generate(): Promise<any> {
+class InvalidJsonProvider extends MockAIProvider {
+    override async generate(): Promise<any> {
         return {
             success: true,
             provider: "mock",
@@ -39,20 +39,16 @@ class InvalidJsonProvider implements IAIProvider {
     }
 }
 
-class ZodValidationErrorProvider implements IAIProvider {
-    async generate(): Promise<any> {
+class ZodValidationErrorProvider extends MockAIProvider {
+    override async generate(): Promise<any> {
         return {
             success: true,
             provider: "mock",
             model: "mock-model",
             data: JSON.stringify([
                 {
-                    firstName: 123, // should be string or null
-                    lastName: "Doe",
-                    email: "invalid-email", // should be email or null
-                    company: "Acme",
-                    phone: "12345",
-                    title: "CEO"
+                    name: 123, // should be string or null
+                    crm_status: "INVALID_STATUS" // should be valid enum or null
                 }
             ])
         };

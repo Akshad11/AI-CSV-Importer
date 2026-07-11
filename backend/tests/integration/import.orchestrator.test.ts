@@ -10,23 +10,23 @@ import { PromptBuilderService } from "../../src/services/ai/promptBuilder.servic
 import { ResponseValidatorService } from "../../src/services/validation/responseValidator.service";
 import { EventBus } from "../../src/core/events/EventBus";
 import { AIProviderResolver } from "../../src/services/ai/AIProviderResolver";
-import { IAIProvider } from "../../src/services/ai/ai.provider";
+import { MockAIProvider } from "../mocks/MockAIProvider";
 import { ILogger } from "../../src/core/interfaces/ILogger";
 
 // Create custom Mock Provider for integration testing
-class TestMockProvider implements IAIProvider {
+class TestMockProvider extends MockAIProvider {
     public generateResult: any = {
         success: true,
         provider: "mock",
         model: "mock-model",
         data: JSON.stringify([
             {
-                firstName: "John",
-                lastName: "Doe",
-                email: "john@example.com",
-                company: "Acme",
-                phone: "12345",
-                title: "Manager"
+                created_at: "2026-05-13 14:20:48",
+                name: "John Doe",
+                email: "john.doe@example.com",
+                company: "GrowEasy",
+                mobile_without_country_code: "9876543210",
+                crm_status: "GOOD_LEAD_FOLLOW_UP"
             }
         ]),
         usage: {
@@ -36,7 +36,7 @@ class TestMockProvider implements IAIProvider {
         }
     };
 
-    async generate(): Promise<any> {
+    override async generate(): Promise<any> {
         return this.generateResult;
     }
 }

@@ -16,7 +16,7 @@ describe("AI Provider Integration Tests", () => {
         expect(response.success).toBe(true);
         expect(response.provider).toBe("mock");
         expect(Array.isArray(response.data)).toBe(true);
-        expect((response.data as any)[0].email).toBe("john@example.com");
+        expect((response.data as any)[0].email).toBe("john.doe@example.com");
     });
 
     // Conditional tests: Only run if API keys are configured in environment

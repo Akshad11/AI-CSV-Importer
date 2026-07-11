@@ -25,12 +25,21 @@ export class MockProvider implements IAIProvider {
         if (request.responseSchema) {
             responseData = [
                 {
-                    firstName: "John",
-                    lastName: "Doe",
-                    email: "john@example.com",
-                    company: "Acme",
-                    phone: "12345",
-                    title: "Manager"
+                    created_at: "2026-05-13 14:20:48",
+                    name: "John Doe",
+                    email: "john.doe@example.com",
+                    country_code: "+91",
+                    mobile_without_country_code: "9876543210",
+                    company: "GrowEasy",
+                    city: "Mumbai",
+                    state: "Maharashtra",
+                    country: "India",
+                    lead_owner: "test@gmail.com",
+                    crm_status: "GOOD_LEAD_FOLLOW_UP",
+                    crm_note: "Client is asking to reschedule demo",
+                    data_source: "leads_on_demand",
+                    possession_time: "2027",
+                    description: "Interested in property"
                 }
             ];
         } else {

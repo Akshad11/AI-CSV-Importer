@@ -8,12 +8,12 @@ Some explanation
 
 [
 {
-"firstName":"John",
-"lastName":"Doe",
-"email":"john@example.com",
-"company":"Acme",
-"phone":"12345",
-"title":"CEO"
+"created_at":"2026-05-13 14:20:48",
+"name":"John Doe",
+"email":"john.doe@example.com",
+"company":"GrowEasy",
+"mobile_without_country_code":"9876543210",
+"crm_status":"GOOD_LEAD_FOLLOW_UP"
 }
 ]
 `;
@@ -24,6 +24,6 @@ Some explanation
         expect(result.length).toBe(1);
 
         expect(result[0].email)
-            .toBe("john@example.com");
+            .toBe("john.doe@example.com");
     });
 });

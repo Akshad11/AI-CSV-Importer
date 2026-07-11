@@ -9,23 +9,23 @@ import { PromptBuilderService } from "../../src/services/ai/promptBuilder.servic
 import { ResponseValidatorService } from "../../src/services/validation/responseValidator.service";
 import { EventBus } from "../../src/core/events/EventBus";
 import { AIProviderResolver } from "../../src/services/ai/AIProviderResolver";
-import { IAIProvider } from "../../src/services/ai/ai.provider";
+import { MockAIProvider } from "../mocks/MockAIProvider";
 import { ILogger } from "../../src/core/interfaces/ILogger";
 
-class TestMockProvider implements IAIProvider {
-    async generate(): Promise<any> {
+class TestMockProvider extends MockAIProvider {
+    override async generate(): Promise<any> {
         return {
             success: true,
             provider: "mock",
             model: "mock-model",
             data: JSON.stringify([
                 {
-                    firstName: "John",
-                    lastName: "Doe",
-                    email: "john@example.com",
-                    company: "Acme",
-                    phone: "12345",
-                    title: "Manager"
+                    created_at: "2026-05-13 14:20:48",
+                    name: "John Doe",
+                    email: "john.doe@example.com",
+                    company: "GrowEasy",
+                    mobile_without_country_code: "9876543210",
+                    crm_status: "GOOD_LEAD_FOLLOW_UP"
                 }
             ]),
             usage: { totalTokens: 10 }
@@ -85,18 +85,18 @@ describe("Import Orchestrator Integration Tests - Progress Events", () => {
 
         const emittedEvents: string[] = [];
         
-        eventBus.subscribe("import:started", () => emittedEvents.push("import:started"));
-        eventBus.subscribe("parsing:started", () => emittedEvents.push("parsing:started"));
-        eventBus.subscribe("parsing:completed", () => emittedEvents.push("parsing:completed"));
-        eventBus.subscribe("batch:created", () => emittedEvents.push("batch:created"));
-        eventBus.subscribe("batch:started", () => emittedEvents.push("batch:started"));
-        eventBus.subscribe("batch:completed", () => emittedEvents.push("batch:completed"));
-        eventBus.subscribe("ai:started", () => emittedEvents.push("ai:started"));
-        eventBus.subscribe("ai:completed", () => emittedEvents.push("ai:completed"));
-        eventBus.subscribe("validation:started", () => emittedEvents.push("validation:started"));
-        eventBus.subscribe("validation:completed", () => emittedEvents.push("validation:completed"));
-        eventBus.subscribe("import:completed", () => emittedEvents.push("import:completed"));
-        eventBus.subscribe("progress:changed", () => emittedEvents.push("progress:changed"));
+        eventBus.subscribe("import:started", () => { emittedEvents.push("import:started"); });
+        eventBus.subscribe("parsing:started", () => { emittedEvents.push("parsing:started"); });
+        eventBus.subscribe("parsing:completed", () => { emittedEvents.push("parsing:completed"); });
+        eventBus.subscribe("batch:created", () => { emittedEvents.push("batch:created"); });
+        eventBus.subscribe("batch:started", () => { emittedEvents.push("batch:started"); });
+        eventBus.subscribe("batch:completed", () => { emittedEvents.push("batch:completed"); });
+        eventBus.subscribe("ai:started", () => { emittedEvents.push("ai:started"); });
+        eventBus.subscribe("ai:completed", () => { emittedEvents.push("ai:completed"); });
+        eventBus.subscribe("validation:started", () => { emittedEvents.push("validation:started"); });
+        eventBus.subscribe("validation:completed", () => { emittedEvents.push("validation:completed"); });
+        eventBus.subscribe("import:completed", () => { emittedEvents.push("import:completed"); });
+        eventBus.subscribe("progress:changed", () => { emittedEvents.push("progress:changed"); });
 
         await orchestrator.execute(context);
 

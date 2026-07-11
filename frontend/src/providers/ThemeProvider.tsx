@@ -1,0 +1,40 @@
+'use client';
+
+import React, { useEffect } from 'react';
+import { useThemeStore } from '../store/useThemeStore';
+
+export function ThemeProvider({ children }: { children: React.ReactNode }) {
+  const { theme } = useThemeStore();
+
+  useEffect(() => {
+    const root = window.document.documentElement;
+
+    const applyTheme = () => {
+      root.classList.remove('light', 'dark');
+
+      if (theme === 'system') {
+        const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches
+          ? 'dark'
+          : 'light';
+        root.classList.add(systemTheme);
+      } else {
+        root.classList.add(theme);
+      }
+    };
+
+    applyTheme();
+
+    if (theme === 'system') {
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      const listener = () => {
+        root.classList.remove('light', 'dark');
+        root.classList.add(mediaQuery.matches ? 'dark' : 'light');
+      };
+      mediaQuery.addEventListener('change', listener);
+      return () => mediaQuery.removeEventListener('change', listener);
+    }
+  }, [theme]);
+
+  return <>{children}</>;
+}
+export default ThemeProvider;

@@ -1,18 +1,18 @@
 import { describe, expect, it } from "vitest";
 import { Container } from "../../../src/container/container";
 import { AIProviderResolver } from "../../../src/services/ai/AIProviderResolver";
-import { IAIProvider } from "../../../src/services/ai/ai.provider";
+import { MockAIProvider as BaseMockAIProvider } from "../../mocks/MockAIProvider";
 import { AIConfig } from "../../../src/config/ai.config";
 
 describe("AI Provider Resolver", () => {
-    class MockAIProvider implements IAIProvider {
-        async generate<T = unknown>(): Promise<any> {
+    class MockAIProvider extends BaseMockAIProvider {
+        override async generate<T = unknown>(): Promise<any> {
             return { success: true, provider: "mock", model: "test", data: {} as T };
         }
     }
 
-    class OpenAIProvider implements IAIProvider {
-        async generate<T = unknown>(): Promise<any> {
+    class OpenAIProvider extends BaseMockAIProvider {
+        override async generate<T = unknown>(): Promise<any> {
             return { success: true, provider: "openai", model: "test", data: {} as T };
         }
     }

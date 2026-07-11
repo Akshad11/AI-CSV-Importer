@@ -11,23 +11,23 @@ import { EventBus } from "../../src/core/events/EventBus";
 import { AIProviderResolver } from "../../src/services/ai/AIProviderResolver";
 import { CancellationToken } from "../../src/core/cancellation/CancellationToken";
 import { CancellationError } from "../../src/core/cancellation/CancellationError";
-import { IAIProvider } from "../../src/services/ai/ai.provider";
+import { MockAIProvider } from "../mocks/MockAIProvider";
 import { ILogger } from "../../src/core/interfaces/ILogger";
 
-class TestMockProvider implements IAIProvider {
-    async generate(): Promise<any> {
+class TestMockProvider extends MockAIProvider {
+    override async generate(): Promise<any> {
         return {
             success: true,
             provider: "mock",
             model: "mock-model",
             data: JSON.stringify([
                 {
-                    firstName: "John",
-                    lastName: "Doe",
-                    email: "john@example.com",
-                    company: "Acme",
-                    phone: "12345",
-                    title: "Manager"
+                    created_at: "2026-05-13 14:20:48",
+                    name: "John Doe",
+                    email: "john.doe@example.com",
+                    company: "GrowEasy",
+                    mobile_without_country_code: "9876543210",
+                    crm_status: "GOOD_LEAD_FOLLOW_UP"
                 }
             ])
         };
@@ -142,6 +142,6 @@ describe("Import Orchestrator Integration Tests - Cancellation", () => {
 
         await expect(orchestrator.execute(context)).rejects.toThrow(CancellationError);
         expect(cancelledEventEmitted).toBe(true);
-        expect(context.statistics.completedBatches).toBe(1); // Only 1 batch should complete
+        expect((context.statistics as any).completedBatches).toBe(1); // Only 1 batch should complete
     });
 });
