@@ -4,8 +4,6 @@
 
 An advanced, production-ready system designed to handle high-throughput, error-tolerant ingestion of contact spreadsheets. The pipeline maps arbitrary headers, sanitizes names, formats phone numbers, normalizes corporate domains, and inserts records into CRM database structures using state-of-the-art AI parsing engines. It features native rate-limiting, circuit breakers, parallel processing, and dynamic provider fallbacks.
 
-![Banner](./docs/banner.png)
-
 ---
 
 ## Badges
@@ -95,34 +93,30 @@ spreadsheets received from lead vendors or sales agents are notoriously messy. M
 
 ## Screenshots
 
-### Dashboard
-![Dashboard](./docs/screenshots/dashboard.png)
+### Overview Dashboard
+![Overview Dashboard — import stats, AI accuracy, and recent ingestion activity](./photos/Dashboard.png)
 
-### Upload Screen
-![Upload](./docs/screenshots/upload.png)
+### New Import
+![New Import — drag & drop upload with automatic row and column detection](./photos/New%20Import.png)
 
 ### Preview & Column Mapping
-![Preview](./docs/screenshots/preview.png)
+![Preview Data — interactive column mapping with AI extraction estimates](./photos/Preview%20Data.png)
 
-### Processing & Live Logs
-![Processing](./docs/screenshots/processing.png)
+### AI Extraction Pipeline (Processing)
+![Import Processing — live activity stream, throughput rate, and real-time progress](./photos/Import%20Processing.png)
 
 ### Import Results
-![Results](./docs/screenshots/results.png)
-
-### System Settings
-![Settings](./docs/screenshots/settings.png)
+![Import Results — CRM records table with AI certainty scores, export to CSV/JSON](./photos/Import%20Result.png)
 
 ---
 
 ## Live Demo
 
-- **Frontend Application**: `https://YOUR_FRONTEND_URL`
-- **Backend API Gateway**: `https://YOUR_BACKEND_URL`
-- **API Documentation**: `https://YOUR_API_DOCS_URL`
-- **GitHub Repository**: `https://github.com/YOUR_USERNAME/YOUR_REPOSITORY`
-
-*(Placeholders will be updated upon final deployment).*
+| | Link |
+|---|---|
+| 🌐 **Frontend** | [ai-csv-importer-xi.vercel.app](https://ai-csv-importer-xi.vercel.app/) |
+| ⚙️ **Backend API** | [ai-csv-importer-fv8q.onrender.com](https://ai-csv-importer-fv8q.onrender.com) |
+| 📁 **GitHub Repository** | [Akshad11/AI-CSV-Importer](https://github.com/Akshad11/AI-CSV-Importer) |
 
 ---
 
@@ -268,8 +262,8 @@ sequenceDiagram
 
 1. **Clone the Repository**
    ```bash
-   git clone https://github.com/YOUR_USERNAME/YOUR_REPOSITORY.git
-   cd YOUR_REPOSITORY
+   git clone https://github.com/Akshad11/AI-CSV-Importer.git
+   cd AI-CSV-Importer
    ```
 
 2. **Configure the Backend**
@@ -667,7 +661,7 @@ Testing is carried out using **Vitest** for speed and mock flexibility.
 
 We welcome contributions from developers of all skill levels!
 
-1. Fork the repository.
+1. Fork the repository: [github.com/Akshad11/AI-CSV-Importer](https://github.com/Akshad11/AI-CSV-Importer).
 2. Create a feature branch: `git checkout -b feature/amazing-feature`.
 3. Commit your changes: `git commit -m 'Add some amazing feature'`.
 4. Push to the branch: `git push origin feature/amazing-feature`.
@@ -683,8 +677,11 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Author
 
-- **Name**: `YOUR_NAME`
-- **Email**: `YOUR_EMAIL`
-- **Website**: `YOUR_WEBSITE`
-- **LinkedIn**: `YOUR_LINKEDIN`
-- **GitHub**: `YOUR_GITHUB`
+**Akshad Dhole**
+
+| | |
+|---|---|
+| 📧 **Email** | [akshad.dhole14@gmail.com](mailto:akshad.dhole14@gmail.com) |
+| 🌐 **Website** | [akshaddhole.in](https://akshaddhole.in/) |
+| 💼 **LinkedIn** | [linkedin.com/in/akshad-](https://www.linkedin.com/in/akshad-) |
+| 🐙 **GitHub** | [github.com/Akshad11](https://github.com/Akshad11) |
