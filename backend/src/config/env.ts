@@ -8,6 +8,8 @@ const envSchema = z.object({
 
     PORT: z.coerce.number().default(5000),
 
+    CORS_ORIGIN: z.string().default("http://localhost:3000"),
+
     OPENAI_API_KEY: z.string().optional(),
     OPENROUTER_API_KEY: z.string().optional(),
 
