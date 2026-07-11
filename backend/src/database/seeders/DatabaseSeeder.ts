@@ -63,6 +63,20 @@ export class DatabaseSeeder {
                 });
             }
 
+            const hasOpenRouter = providers.some(p => p.providerName === "openrouter");
+            if (!hasOpenRouter) {
+                logger.info("Seeding OpenRouter AI Provider...", { module: "Database", action: "SeedProviders", status: "PENDING" });
+                await providerRepo.create({
+                    providerName: "openrouter",
+                    enabled: true,
+                    priority: 5,
+                    defaultModel: "openai/gpt-4o",
+                    timeout: 30000,
+                    rateLimits: { requestsPerMinute: 60, tokensPerMinute: 150000 },
+                    retryPolicy: { maxAttempts: 3, initialDelayMs: 1000 }
+                });
+            }
+
             // 2. Seed AI Models
             const models = await modelRepo.list();
             if (models.length === 0) {
@@ -82,6 +96,14 @@ export class DatabaseSeeder {
 
                 // Mock
                 await modelRepo.create({ provider: "mock", modelName: "mock-model", displayName: "Mock Local Extractor", maxTokens: 1000, temperature: 0.0, enabled: true, default: true, supportsJson: true });
+            }
+
+            const hasOpenRouterModels = models.some(m => m.provider === "openrouter");
+            if (!hasOpenRouterModels) {
+                logger.info("Seeding OpenRouter AI Models...", { module: "Database", action: "SeedModels", status: "PENDING" });
+                await modelRepo.create({ provider: "openrouter", modelName: "openai/gpt-4o", displayName: "OpenRouter GPT-4o", maxTokens: 4096, temperature: 0.2, enabled: true, default: true, supportsJson: true });
+                await modelRepo.create({ provider: "openrouter", modelName: "openai/gpt-4o-mini", displayName: "OpenRouter GPT-4o Mini", maxTokens: 4096, temperature: 0.2, enabled: true, default: false, supportsJson: true });
+                await modelRepo.create({ provider: "openrouter", modelName: "anthropic/claude-3.5-sonnet", displayName: "OpenRouter Claude 3.5 Sonnet", maxTokens: 8192, temperature: 0.2, enabled: true, default: false, supportsJson: true });
             }
 
             // 3. Seed Prompt Configurations

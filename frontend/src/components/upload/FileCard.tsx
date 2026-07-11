@@ -85,7 +85,7 @@ export function FileCard() {
           <div>
             <span className="font-bold">AI Pipeline Disabled</span>
             <p className="mt-0.5 text-destructive/80">
-              Your API Key or Local AI is not integrated for {settings.aiProvider === 'openai' ? 'ChatGPT' : settings.aiProvider === 'gemini' ? 'Gemini' : 'Local Llama'}. Please configure it in your environment.
+              Your API Key or Local AI is not integrated for {settings.aiProvider === 'openai' ? 'ChatGPT' : settings.aiProvider === 'gemini' ? 'Gemini' : settings.aiProvider === 'openrouter' ? 'OpenRouter' : 'Local Llama'}. Please configure it in your environment.
             </p>
           </div>
         </div>

@@ -30,15 +30,18 @@ import { MockProvider } from "../../services/ai/providers/mock.provider";
 import { OllamaProvider } from "../../services/ai/providers/ollama.provider";
 import { ClaudeProvider } from "../../services/ai/providers/claude.provider";
 import { AzureOpenAIProvider } from "../../services/ai/providers/azure.provider";
+import { OpenRouterProvider } from "../../services/ai/providers/openrouter.provider";
 
 export class ImporterService {
     async getStatus() {
         const openaiKey = process.env.OPENAI_API_KEY;
         const geminiKey = process.env.GEMINI_API_KEY;
+        const openrouterKey = process.env.OPENROUTER_API_KEY;
         const localLlamaUrl = process.env.LOCAL_LLAMA_URL || process.env.LOCAL_LLAMA_AVAILABLE;
 
         const hasOpenAI = !!openaiKey && openaiKey.trim() !== "" && openaiKey !== "your_api_key_here";
         const hasGemini = !!geminiKey && geminiKey.trim() !== "" && geminiKey !== "your_api_key_here";
+        const hasOpenRouter = !!openrouterKey && openrouterKey.trim() !== "" && openrouterKey !== "your_api_key_here";
         const hasLocal = !!localLlamaUrl && localLlamaUrl.trim() !== "" && localLlamaUrl !== "false";
 
         let preferredConfig = {
@@ -73,6 +76,7 @@ export class ImporterService {
                 openai: hasOpenAI,
                 gemini: hasGemini,
                 ollama: hasLocal,
+                openrouter: hasOpenRouter,
                 mock: true
             },
             preferredConfig
@@ -113,6 +117,7 @@ export class ImporterService {
         container.registerSingleton("OllamaProvider", OllamaProvider);
         container.registerSingleton("ClaudeProvider", ClaudeProvider);
         container.registerSingleton("AzureOpenAIProvider", AzureOpenAIProvider);
+        container.registerSingleton("OpenRouterProvider", OpenRouterProvider);
         container.registerSingleton("aiProviderResolver", ProviderManager);
 
         const resolver = container.resolve<IAIProviderResolver>("aiProviderResolver");
@@ -227,6 +232,7 @@ export class ImporterService {
         container.registerSingleton("OllamaProvider", OllamaProvider);
         container.registerSingleton("ClaudeProvider", ClaudeProvider);
         container.registerSingleton("AzureOpenAIProvider", AzureOpenAIProvider);
+        container.registerSingleton("OpenRouterProvider", OpenRouterProvider);
         container.registerSingleton("aiProviderResolver", ProviderManager);
 
         // MongoDB Repositories
@@ -462,6 +468,7 @@ export class ImporterService {
         let costPerRowUsd = 0.0001;
         if (provider === "openai") costPerRowUsd = 0.0005;
         else if (provider === "gemini") costPerRowUsd = 0.00015;
+        else if (provider === "openrouter") costPerRowUsd = 0.0005;
         else if (provider === "ollama") costPerRowUsd = 0.0;
         const totalCost = parseFloat((crmRecords.length * costPerRowUsd * 83.0).toFixed(4));
 

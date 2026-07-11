@@ -15,7 +15,7 @@ export function PageContainer({ children, className }: PageContainerProps) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 8 }}
       transition={{ duration: 0.25, ease: 'easeOut' }}
-      className={`w-full h-full flex flex-col gap-6 ${className || ''}`}
+      className={`w-full h-full flex flex-col gap-6 pb-12 ${className || ''}`}
     >
       {children}
     </motion.div>

@@ -17,7 +17,7 @@ export class ProviderHealthService {
 
     constructor() {
         // Initialize default stats for known providers
-        const providers = ["gemini", "openai", "claude", "ollama", "azure", "mock"];
+        const providers = ["gemini", "openai", "claude", "ollama", "azure", "mock", "openrouter"];
         for (const p of providers) {
             this.stats.set(p, {
                 providerName: p,

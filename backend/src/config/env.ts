@@ -9,6 +9,7 @@ const envSchema = z.object({
     PORT: z.coerce.number().default(5000),
 
     OPENAI_API_KEY: z.string().optional(),
+    OPENROUTER_API_KEY: z.string().optional(),
 
     MAX_FILE_SIZE: z.coerce.number().default(5 * 1024 * 1024),
 

@@ -17,7 +17,7 @@ describe("Prompt Builder", () => {
             }
         });
 
-        expect(prompt.system).toContain("CRM");
+        expect(prompt.system).toContain("JSON");
 
         expect(prompt.user).toContain("john@example.com");
     });

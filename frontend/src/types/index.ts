@@ -113,5 +113,6 @@ export interface SystemSettings {
   rowsPerPage: number;
   animationSpeed: 'slow' | 'normal' | 'fast';
   defaultPreviewRows: number;
-  aiProvider: 'openai' | 'gemini' | 'ollama' | 'mock';
+  aiProvider: 'openai' | 'gemini' | 'ollama' | 'openrouter' | 'mock';
+  batchSize: number;
 }

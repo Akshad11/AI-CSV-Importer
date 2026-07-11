@@ -26,6 +26,8 @@ export function SummaryCard({ onConfirm }: SummaryCardProps) {
       costPerRowUsd = 0.0005;
     } else if (settings.aiProvider === 'gemini') {
       costPerRowUsd = 0.00015;
+    } else if (settings.aiProvider === 'openrouter') {
+      costPerRowUsd = 0.0005;
     } else if (settings.aiProvider === 'ollama') {
       costPerRowUsd = 0.0;
     } else {
@@ -144,7 +146,7 @@ export function SummaryCard({ onConfirm }: SummaryCardProps) {
               <div>
                 <span className="font-bold">Provider Not Integrated</span>
                 <p className="mt-0.5 text-destructive/80">
-                  Your API Key or Local AI is not integrated for {settings.aiProvider === 'openai' ? 'ChatGPT' : settings.aiProvider === 'gemini' ? 'Gemini' : 'Local Llama'}.
+                  Your API Key or Local AI is not integrated for {settings.aiProvider === 'openai' ? 'ChatGPT' : settings.aiProvider === 'gemini' ? 'Gemini' : settings.aiProvider === 'openrouter' ? 'OpenRouter' : 'Local Llama'}.
                 </p>
               </div>
             </div>

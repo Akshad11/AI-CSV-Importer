@@ -5,6 +5,7 @@ import { GeminiProvider } from "./providers/gemini.provider";
 import { ClaudeProvider } from "./providers/claude.provider";
 import { AzureOpenAIProvider } from "./providers/azure.provider";
 import { OllamaProvider } from "./providers/ollama.provider";
+import { OpenRouterProvider } from "./providers/openrouter.provider";
 
 export type AIProviderType =
     | "mock"
@@ -12,7 +13,8 @@ export type AIProviderType =
     | "gemini"
     | "claude"
     | "azure"
-    | "ollama";
+    | "ollama"
+    | "openrouter";
 
 export class AIProviderFactory {
     /**
@@ -30,6 +32,8 @@ export class AIProviderFactory {
                 return new AzureOpenAIProvider();
             case "ollama":
                 return new OllamaProvider();
+            case "openrouter":
+                return new OpenRouterProvider();
             case "mock":
             default:
                 return new MockProvider();

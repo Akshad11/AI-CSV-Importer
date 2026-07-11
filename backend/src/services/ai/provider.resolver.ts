@@ -13,7 +13,8 @@ export class AIProviderResolver implements IAIProviderResolver {
         mock: "MockProvider",
         claude: "ClaudeProvider",
         azure: "AzureOpenAIProvider",
-        ollama: "OllamaProvider"
+        ollama: "OllamaProvider",
+        openrouter: "OpenRouterProvider"
     };
 
     constructor(

@@ -38,6 +38,24 @@ export const MODEL_CONFIGS: Record<string, ModelInformation> = {
         supportsStructuredOutput: true,
         supportsStreaming: true
     },
+    "openai/gpt-4o": {
+        name: "openai/gpt-4o",
+        contextWindow: 128000,
+        maxOutputTokens: 4096,
+        costPer1kPrompt: 0.0025,
+        costPer1kCompletion: 0.01,
+        supportsStructuredOutput: true,
+        supportsStreaming: true
+    },
+    "openai/gpt-4o-mini": {
+        name: "openai/gpt-4o-mini",
+        contextWindow: 128000,
+        maxOutputTokens: 4096,
+        costPer1kPrompt: 0.00015,
+        costPer1kCompletion: 0.0006,
+        supportsStructuredOutput: true,
+        supportsStreaming: true
+    },
 
     // Gemini Models
     "gemini-2.5-pro": {
@@ -87,6 +105,15 @@ export const MODEL_CONFIGS: Record<string, ModelInformation> = {
         supportsStructuredOutput: false, // Scaffold only
         supportsStreaming: true
     },
+    "anthropic/claude-3.5-sonnet": {
+        name: "anthropic/claude-3.5-sonnet",
+        contextWindow: 200000,
+        maxOutputTokens: 8192,
+        costPer1kPrompt: 0.003,
+        costPer1kCompletion: 0.015,
+        supportsStructuredOutput: true,
+        supportsStreaming: true
+    },
     "claude-3-opus": {
         name: "claude-3-opus",
         contextWindow: 200000,
@@ -126,5 +153,6 @@ export const DEFAULT_MODEL_CONFIGS: Record<string, string> = {
     claude: "claude-3-5-sonnet",
     azure: "gpt-4o",
     ollama: "ollama-local",
-    mock: "mock-model"
+    mock: "mock-model",
+    openrouter: "openai/gpt-4o"
 };

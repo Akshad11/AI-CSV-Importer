@@ -65,7 +65,8 @@ const DEFAULT_MODELS: Record<string, string> = {
     claude: "claude-3-5-sonnet",
     ollama: process.env.OLLAMA_MODEL || "llama3",
     mock: "mock-model",
-    azure: "gpt-5.4-mini"
+    azure: "gpt-5.4-mini",
+    openrouter: "openai/gpt-4o"
 };
 
 export class ResilientAIProvider implements IAIProvider {
@@ -95,7 +96,8 @@ export class ResilientAIProvider implements IAIProvider {
             claude: new CircuitBreaker(3, 30000, this.eventBus, "claude"),
             ollama: new CircuitBreaker(3, 30000, this.eventBus, "ollama"),
             mock: new CircuitBreaker(3, 30000, this.eventBus, "mock"),
-            azure: new CircuitBreaker(3, 30000, this.eventBus, "azure")
+            azure: new CircuitBreaker(3, 30000, this.eventBus, "azure"),
+            openrouter: new CircuitBreaker(3, 30000, this.eventBus, "openrouter")
         };
 
         // Initialize rate limiters with default tokens & requests limits
@@ -105,7 +107,8 @@ export class ResilientAIProvider implements IAIProvider {
             claude: new RateLimiter({ requestsPerMinute: 50, tokensPerMinute: 50000 }),
             ollama: new RateLimiter({ requestsPerMinute: 1000, tokensPerMinute: 1000000 }),
             mock: new RateLimiter({ requestsPerMinute: 10000, tokensPerMinute: 10000000 }),
-            azure: new RateLimiter({ requestsPerMinute: 200, tokensPerMinute: 100000 })
+            azure: new RateLimiter({ requestsPerMinute: 200, tokensPerMinute: 100000 }),
+            openrouter: new RateLimiter({ requestsPerMinute: 60, tokensPerMinute: 150000 })
         };
 
         // Centralized AI Request Queue (concurrency = 5, max queue = 200)
@@ -286,6 +289,8 @@ export class ResilientAIProvider implements IAIProvider {
             return DEFAULT_MODELS[provider] || "mock-model";
         }
 
+        if (provider === "openrouter") return requestedModel;
+
         // If the requested model is compatible with the provider type, keep it.
         const isGeminiModel = requestedModel.toLowerCase().includes("gemini");
         const isOpenAiModel = requestedModel.toLowerCase().includes("gpt") || requestedModel.toLowerCase().includes("o1");
@@ -308,7 +313,8 @@ export class ResilientAIProvider implements IAIProvider {
             mock: "MockProvider",
             claude: "ClaudeProvider",
             azure: "AzureOpenAIProvider",
-            ollama: "OllamaProvider"
+            ollama: "OllamaProvider",
+            openrouter: "OpenRouterProvider"
         };
         const token = tokenMap[providerType];
         if (!token) {

@@ -5,6 +5,7 @@ import { GeminiProvider } from "../../../src/services/ai/providers/gemini.provid
 import { ClaudeProvider } from "../../../src/services/ai/providers/claude.provider";
 import { AzureOpenAIProvider } from "../../../src/services/ai/providers/azure.provider";
 import { OllamaProvider } from "../../../src/services/ai/providers/ollama.provider";
+import { OpenRouterProvider } from "../../../src/services/ai/providers/openrouter.provider";
 
 const providers = [
     { name: "Mock", provider: new MockProvider() },
@@ -12,7 +13,8 @@ const providers = [
     { name: "Gemini", provider: new GeminiProvider() },
     { name: "Claude", provider: new ClaudeProvider() },
     { name: "Azure OpenAI", provider: new AzureOpenAIProvider() },
-    { name: "Ollama", provider: new OllamaProvider() }
+    { name: "Ollama", provider: new OllamaProvider() },
+    { name: "OpenRouter", provider: new OpenRouterProvider() }
 ];
 
 describe("AI Provider Contract Verification Tests", () => {

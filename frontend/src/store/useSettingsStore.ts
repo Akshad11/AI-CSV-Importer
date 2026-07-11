@@ -7,6 +7,7 @@ interface SettingsState {
     openai: boolean;
     gemini: boolean;
     ollama: boolean;
+    openrouter: boolean;
     mock: boolean;
   };
   updateSettings: (newSettings: Partial<Omit<SystemSettings, 'theme'>>) => void;
@@ -15,6 +16,7 @@ interface SettingsState {
     openai: boolean;
     gemini: boolean;
     ollama: boolean;
+    openrouter: boolean;
     mock: boolean;
   }) => void;
 }
@@ -26,12 +28,14 @@ const defaultSettings: Omit<SystemSettings, 'theme'> = {
   animationSpeed: 'normal',
   defaultPreviewRows: 50,
   aiProvider: 'openai',
+  batchSize: 25,
 };
 
 const defaultProviders = {
   openai: false,
   gemini: false,
   ollama: false,
+  openrouter: false,
   mock: true,
 };
 

@@ -26,7 +26,11 @@ const settingsSchema = z.object({
   rowsPerPage: z.coerce.number(),
   animationSpeed: z.enum(['slow', 'normal', 'fast']),
   defaultPreviewRows: z.coerce.number(),
-  aiProvider: z.enum(['openai', 'gemini', 'ollama', 'mock']),
+  aiProvider: z.enum(['openai', 'gemini', 'ollama', 'openrouter', 'mock']),
+  batchSize: z.coerce
+    .number()
+    .min(1, { message: 'Batch size must be at least 1.' })
+    .max(500, { message: 'Batch size cannot exceed 500.' }),
 });
 
 type SettingsFormValues = z.infer<typeof settingsSchema>;
@@ -39,7 +43,7 @@ export default function SettingsPage() {
   const [isDangerDialogOpen, setIsDangerDialogOpen] = useState(false);
 
   // AI Connection Test State
-  const [testProvider, setTestProvider] = useState<'openai' | 'gemini' | 'ollama'>('gemini');
+  const [testProvider, setTestProvider] = useState<'openai' | 'gemini' | 'ollama' | 'openrouter'>('gemini');
   const [testModel, setTestModel] = useState<string>('gemini-3.5-flash');
   const [testPrompt, setTestPrompt] = useState<string>('Hello');
   const [isTesting, setIsTesting] = useState(false);
@@ -57,6 +61,11 @@ export default function SettingsPage() {
       { value: 'gemini-1.5-flash', label: 'gemini-1.5-flash' },
       { value: 'gemini-1.5-pro', label: 'gemini-1.5-pro' }
     ],
+    openrouter: [
+      { value: 'openai/gpt-4o', label: 'openai/gpt-4o' },
+      { value: 'openai/gpt-4o-mini', label: 'openai/gpt-4o-mini' },
+      { value: 'anthropic/claude-3.5-sonnet', label: 'anthropic/claude-3.5-sonnet' }
+    ],
     ollama: [
       { value: 'llama3', label: 'llama3' },
       { value: 'qwen2.5-coder:3b', label: 'qwen2.5-coder:3b' },
@@ -68,9 +77,10 @@ export default function SettingsPage() {
     const defaultModels = {
       openai: 'gpt-4o-mini',
       gemini: 'gemini-3.5-flash',
+      openrouter: 'openai/gpt-4o',
       ollama: 'llama3'
     };
-    setTestModel(defaultModels[testProvider]);
+    setTestModel(defaultModels[testProvider as keyof typeof defaultModels]);
   }, [testProvider]);
 
   const handleTestConnection = async () => {
@@ -110,6 +120,7 @@ export default function SettingsPage() {
       animationSpeed: settings.animationSpeed,
       defaultPreviewRows: settings.defaultPreviewRows,
       aiProvider: settings.aiProvider,
+      batchSize: settings.batchSize || 25,
     },
   });
 
@@ -122,6 +133,7 @@ export default function SettingsPage() {
           const mapped = {
             aiProvider: backendSettings.defaultAiProvider || settings.aiProvider,
             rowsPerPage: backendSettings.rowsPerPage || settings.rowsPerPage,
+            batchSize: backendSettings.batchSize || settings.batchSize || 25,
           };
           updateSettings(mapped);
           reset({
@@ -131,6 +143,7 @@ export default function SettingsPage() {
             animationSpeed: settings.animationSpeed,
             defaultPreviewRows: settings.defaultPreviewRows,
             aiProvider: backendSettings.defaultAiProvider || settings.aiProvider,
+            batchSize: backendSettings.batchSize || settings.batchSize || 25,
           });
         }
       } catch (err) {
@@ -145,8 +158,9 @@ export default function SettingsPage() {
       updateSettings(values);
       await ImportService.updateSettings({
         defaultAiProvider: values.aiProvider,
-        defaultModel: values.aiProvider === 'openai' ? 'gpt-4o-mini' : values.aiProvider === 'gemini' ? 'gemini-3.5-flash' : 'llama3',
+        defaultModel: values.aiProvider === 'openai' ? 'gpt-4o-mini' : values.aiProvider === 'gemini' ? 'gemini-3.5-flash' : values.aiProvider === 'openrouter' ? 'openai/gpt-4o' : 'llama3',
         rowsPerPage: values.rowsPerPage,
+        batchSize: values.batchSize,
       });
       toast.success('System preferences saved successfully!');
       reset(values); // reset dirty state
@@ -164,11 +178,13 @@ export default function SettingsPage() {
   const providerOptions = [
     { value: 'openai', label: 'ChatGPT (gpt-4o-mini)' },
     { value: 'gemini', label: 'Gemini (gemini-3.5-flash)' },
+    { value: 'openrouter', label: 'OpenRouter (openai/gpt-4o)' },
     { value: 'ollama', label: 'Local Llama (llama3 via Ollama)' },
     { value: 'mock', label: 'Mock Rule-Based Importer' },
   ].filter((opt) => {
     if (opt.value === 'openai') return availableProviders.openai;
     if (opt.value === 'gemini') return availableProviders.gemini;
+    if (opt.value === 'openrouter') return availableProviders.openrouter;
     if (opt.value === 'ollama') return availableProviders.ollama;
     return true;
   });
@@ -236,6 +252,28 @@ export default function SettingsPage() {
                 ) : (
                   <p className="text-xs text-muted-foreground">
                     Fallback source assigned to CRM records if source columns are unmapped or missing values.
+                  </p>
+                )}
+              </div>
+
+              {/* Batch Size */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Records per Batch
+                </label>
+                <Input
+                  type="number"
+                  placeholder="e.g. 25"
+                  className={cn(errors.batchSize && 'border-destructive')}
+                  {...register('batchSize')}
+                />
+                {errors.batchSize ? (
+                  <span className="text-xs text-destructive font-mono mt-0.5 block">
+                    {errors.batchSize.message}
+                  </span>
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    Number of CSV rows sent to the AI in each parallel batch request. Lower values are safer for local models.
                   </p>
                 )}
               </div>
@@ -393,6 +431,7 @@ export default function SettingsPage() {
                 >
                   <option value="gemini">Gemini</option>
                   <option value="openai">OpenAI</option>
+                  <option value="openrouter">OpenRouter</option>
                   <option value="ollama">Ollama (Local Llama)</option>
                 </select>
               </div>

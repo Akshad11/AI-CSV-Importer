@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { MockProvider } from "../../../src/services/ai/providers/mock.provider";
 import { OpenAIProvider } from "../../../src/services/ai/providers/openai.provider";
 import { GeminiProvider } from "../../../src/services/ai/providers/gemini.provider";
+import { OpenRouterProvider } from "../../../src/services/ai/providers/openrouter.provider";
 import { leadSchema } from "../../../src/services/ai/schemas/lead.schema";
 
 describe("AI Provider Integration Tests", () => {
@@ -50,5 +51,21 @@ describe("AI Provider Integration Tests", () => {
         expect(response.provider).toBe("gemini");
         expect(Array.isArray(response.data)).toBe(true);
         expect((response.data as any)[0].email).toBe("alice@example.com");
+    });
+
+    const runOpenRouterTest = process.env.OPENROUTER_API_KEY ? it : it.skip;
+    runOpenRouterTest("verifies real OpenRouter provider structured output with Zod schema", async () => {
+        const provider = new OpenRouterProvider();
+        const response = await provider.generate({
+            system: "Extract leads from user content. Return a JSON array matching the schema.",
+            user: "Lead 1: Name: Sarah Connor, Email: sarah.connor@sky.net, Company: Resistance, Title: Commander",
+            responseSchema: leadSchema,
+            responseSchemaName: "leads"
+        });
+
+        expect(response.success).toBe(true);
+        expect(response.provider).toBe("openrouter");
+        expect(Array.isArray(response.data)).toBe(true);
+        expect((response.data as any)[0].email).toBe("sarah.connor@sky.net");
     });
 });

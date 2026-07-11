@@ -88,13 +88,14 @@ export default function ProcessingPage() {
           let model = 'mock-model';
           if (settings.aiProvider === 'openai') model = 'gpt-4o-mini';
           else if (settings.aiProvider === 'gemini') model = 'gemini-3.5-flash';
+          else if (settings.aiProvider === 'openrouter') model = 'openai/gpt-4o';
           else if (settings.aiProvider === 'ollama') model = 'llama3';
 
           const responsePromise = ImportService.processCsv({
             file: file!,
             provider: settings.aiProvider,
             model,
-            batchSize: 25,
+            batchSize: settings.batchSize || 25,
             columnMappings,
             confidenceThreshold: settings.confidenceThreshold,
             defaultLeadSource: settings.defaultLeadSource,

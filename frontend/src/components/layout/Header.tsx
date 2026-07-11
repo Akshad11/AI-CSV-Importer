@@ -46,11 +46,11 @@ export function Header() {
           }
         } else {
           setConnectionStatus('offline');
-          setAvailableProviders({ openai: false, gemini: false, ollama: false, mock: true });
+          setAvailableProviders({ openai: false, gemini: false, ollama: false, openrouter: false, mock: true });
         }
       } catch (err) {
         setConnectionStatus('offline');
-        setAvailableProviders({ openai: false, gemini: false, ollama: false, mock: true });
+        setAvailableProviders({ openai: false, gemini: false, ollama: false, openrouter: false, mock: true });
       }
     };
 
